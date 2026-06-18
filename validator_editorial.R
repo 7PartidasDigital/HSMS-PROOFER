@@ -146,7 +146,6 @@ check_ellipsis <- function(filepath) {
 }
 
 
-
 # =========================================================
 # check_percent_spacing()
 # ---------------------------------------------------------
@@ -164,12 +163,21 @@ check_ellipsis <- function(filepath) {
 #   %
 #   %2
 #   %3
+#   ¶
+#   ¶2
+#   ¶3
 #   [%]
 #   [^%]
 #   [%2]
 #   [^%2]
 #   [%3]
 #   [^%3]
+#   [¶]
+#   [^¶]
+#   [¶2]
+#   [^¶2]
+#   [¶3]
+#   [^¶3]
 #
 # ---------------------------------------------------------
 # Ejemplos válidos:
@@ -182,12 +190,22 @@ check_ellipsis <- function(filepath) {
 #   abc [%] def
 #   abc [^%2] def
 #
+#   ¶ abc
+#   abc ¶ def
+#   abc ¶2 def
+#   abc [¶] def
+#   abc [^¶2] def
+#
 # ---------------------------------------------------------
 # Ejemplos inválidos:
 #
 #   abc%def
 #   abc%2 def
 #   abc %3def
+#
+#   abc¶def
+#   abc¶2 def
+#   abc ¶3def
 #
 # =========================================================
 
@@ -207,15 +225,29 @@ check_percent_spacing <- function(filepath) {
     
     line <- lines[[line_no]]
     
+    # ---------------------------------------------
+    # Normalización interna:
+    #   ¶ ≡ %
+    # ---------------------------------------------
+    
+    line_for_check <- chartr(
+      "¶",
+      "%",
+      line
+    )
+    
     matches <- gregexpr(
       token_pattern,
-      line,
+      line_for_check,
       perl = TRUE
     )[[1]]
     
     if (matches[1] == -1) next
     
-    match_lengths <- attr(matches, "match.length")
+    match_lengths <- attr(
+      matches,
+      "match.length"
+    )
     
     for (i in seq_along(matches)) {
       
@@ -224,13 +256,21 @@ check_percent_spacing <- function(filepath) {
       end_pos <- start_pos + token_len - 1
       
       prev <- if (start_pos > 1) {
-        substr(line, start_pos - 1, start_pos - 1)
+        substr(
+          line_for_check,
+          start_pos - 1,
+          start_pos - 1
+        )
       } else {
         ""
       }
       
-      next_char <- if (end_pos < nchar(line)) {
-        substr(line, end_pos + 1, end_pos + 1)
+      next_char <- if (end_pos < nchar(line_for_check)) {
+        substr(
+          line_for_check,
+          end_pos + 1,
+          end_pos + 1
+        )
       } else {
         ""
       }
@@ -243,11 +283,12 @@ check_percent_spacing <- function(filepath) {
           type = "percent_missing_space_before",
           text = line,
           explanation =
-            "El calderón %, %2, %3 o su forma insertada debe ir precedido por espacio, salvo si está al inicio de línea."
+            "El calderón %, %2, %3, ¶, ¶2, ¶3 o sus formas insertadas debe ir precedido por espacio, salvo si está al inicio de línea."
         )
       }
       
-      if (end_pos < nchar(line) && next_char != " ") {
+      if (end_pos < nchar(line_for_check) &&
+          next_char != " ") {
         
         issues[[length(issues) + 1]] <- list(
           line = line_no,
@@ -255,7 +296,7 @@ check_percent_spacing <- function(filepath) {
           type = "percent_missing_space_after",
           text = line,
           explanation =
-            "El calderón %, %2, %3 o su forma insertada debe ir seguido por espacio, salvo si está al final de línea."
+            "El calderón %, %2, %3, ¶, ¶2, ¶3 o sus formas insertadas debe ir seguido por espacio, salvo si está al final de línea."
         )
       }
     }
@@ -272,12 +313,23 @@ check_percent_spacing <- function(filepath) {
     ))
   }
   
-  do.call(rbind, lapply(issues, as.data.frame))
+  do.call(
+    rbind,
+    lapply(
+      issues,
+      as.data.frame
+    )
+  )
 }
 
 
 # =========================================================
 # check_para_spacing()
+# ---------------------------------------------------------
+# OBSOLETA.
+# El signo ¶ se valida ahora en check_percent_spacing(),
+# donde se trata como equivalente Unicode de %.
+# Se conserva temporalmente por memoria histórica.
 # ---------------------------------------------------------
 # Regla HSMS:
 #
@@ -1149,7 +1201,6 @@ check_illegible_marker_length <- function(filepath) {
 #   2. El mnemónico debe permitir continuación según
 #      hsms_structural_tag_catalog()$can_continue.
 #   3. Se ignora "[+]", que es otro signo funcional.
-#   4. Se ignoran líneas de comentario que empiezan por "%".
 #
 # =========================================================
 
@@ -1769,7 +1820,7 @@ check_editorial <- function(filepath) {
   editorial_issues <- list(
     check_ellipsis(filepath),
     check_percent_spacing(filepath),
-    check_para_spacing(filepath),
+    #check_para_spacing(filepath),
     check_double_spaces(filepath),
     check_edge_spaces(filepath),
     check_invisible_spaces(filepath),
