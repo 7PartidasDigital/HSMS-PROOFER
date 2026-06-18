@@ -1,6 +1,53 @@
 # =========================================================
-# HSMS Proofer Shiny App
+# HSMS Proofer
+# ---------------------------------------------------------
+# Shiny application for the validation and proofing of
+# manuscript transcriptions prepared according to the
+# conventions of the Hispanic Seminary of Medieval Studies.
+#
+# The application performs structural, editorial and
+# technical checks and produces TSV and human-readable
+# diagnostic reports.
+#
+# Developed within the framework of the
+# Hispanic Seminary of Medieval Studies (HSMS).
+#
+# Authors:
+#
+# José Manuel Fradejas Rueda
+# Universidad de Valladolid
+#
+# Francisco Gago Jover
+# The College of the Holy Cross
+#
+# Historical background:
+#
+# The present application is the successor of the
+# original HSMS Proofer developed for the generation,
+# proofing and correction of machine-readable
+# transcriptions.
+#
+# References:
+#
+# Nitti, John J. (1978).
+# "The Computer Processing of Medieval Texts".
+# Computers and the Humanities, 12, 3-9.
+#
+# Repository:
+#
+# https://github.com/7PartidasDigital/HSMS-PROOFER
+#
+# License:
+#
+# MIT License
+#
+# Motto:
+#
+# Proofer points; the editor decides.
+# Proofer señala; el editor decide.
+#
 # =========================================================
+
 
 library(shiny)
 library(DT)
