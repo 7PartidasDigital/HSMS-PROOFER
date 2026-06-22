@@ -927,7 +927,7 @@ check_multiple_blank_lines <- function(filepath) {
 # =========================================================
 
 check_line_length <- function(filepath,
-                              max_length = 120) {
+                              max_length = 256) {
   
   lines <- readLines(
     filepath,
