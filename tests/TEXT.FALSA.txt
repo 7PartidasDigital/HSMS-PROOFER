@@ -355,3 +355,10 @@ texto [¶2] texto
 texto [^¶2] texto
 texto [¶3] texto
 texto [^¶3] texto
+
+{HD. texto \ antiguo}
+{HD1. texto \ antiguo}
+{HD2. texto \ antiguo}
+{HD3. texto \ antiguo}
+{LAT. texto \ texto}
+texto \ texto

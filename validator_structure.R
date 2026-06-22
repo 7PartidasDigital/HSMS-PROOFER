@@ -3777,8 +3777,8 @@ check_rmk_internal_punctuation <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   La barra inversa "\" precede a la foliación antigua
-#   incluida en el mnemónico de encabezamiento {HD. ...}.
+#   "\" solo puede aparecer dentro de una etiqueta
+#   {HD. ...}, {HD1. ...} o {HD2. ...}.
 #
 # ---------------------------------------------------------
 # Regla:
@@ -3841,7 +3841,7 @@ check_backslash_only_inside_hd <- function(filepath) {
         )
         
         inside_hd <- grepl(
-          "^\\{HD\\.",
+          "^\\{HD[12]?\\.",
           candidate,
           perl = TRUE
         )
@@ -3867,7 +3867,7 @@ check_backslash_only_inside_hd <- function(filepath) {
           type = "backslash_outside_hd",
           text = line,
           explanation =
-            "La barra inversa '\\' solo puede aparecer dentro del mnemónico {HD. ...} para indicar foliación antigua."
+            "La barra inversa '\\' solo puede aparecer dentro del mnemónico {HD. ...}, {HD1. ...} o {HD2. ...} para indicar foliación antigua."
         )
       }
     }
