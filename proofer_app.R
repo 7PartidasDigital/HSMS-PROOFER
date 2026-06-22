@@ -270,9 +270,30 @@ server <- function(input, output, session) {
     
     req(input$file)
     
-    validate_file(
-      filepath = input$file$datapath,
-      uploaded_name = input$file$name
+    withProgress(
+      
+      message = "Validating file / Validando fichero",
+      detail = "Please wait. Large files may take several minutes. / Espere, por favor. Los ficheros grandes pueden tardar varios minutos.",
+      value = 0,
+      
+      {
+        incProgress(
+          0.2,
+          detail = "Reading and checking file / Leyendo y comprobando el fichero"
+        )
+        
+        result <- validate_file(
+          filepath = input$file$datapath,
+          uploaded_name = input$file$name
+        )
+        
+        incProgress(
+          0.8,
+          detail = "Preparing report / Preparando el informe"
+        )
+        
+        result
+      }
     )
   })
   
