@@ -23,6 +23,8 @@
 * Added support for pilcrow characters (`¶`, `¶2`, `¶3`) as Unicode equivalents of the traditional HSMS symbols (`%`, `%2`, `%3`).
 * Added support for inserted pilcrow forms (`[¶]`, `[^¶]`, `[¶2]`, `[^¶2]`, `[¶3]`, `[^¶3]`).
 * Obsoleted `check_para_spacing()`, whose functionality has been absorbed into `check_percent_spacing()`.
+* Allowed non-structural mnemonics inside scribal insertions within `{GL.}` and `{AD.}` containers.
+* Kept structural mnemonics such as `{CB.}`, `{HD.}`, `{CW.}` and `{SG.}` prohibited inside such insertions.
 
 ### Structural checks
 
