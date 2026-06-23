@@ -362,3 +362,11 @@ texto [^¶3] texto
 {HD3. texto \ antiguo}
 {LAT. texto \ texto}
 texto \ texto
+
+{GL. [^{CB. texto}]}
+{GL. [^{HD. texto}]}
+{GL. [^{CW. texto}]}
+{GL. [^{SG. texto}]}
+{AD. [^{CB. texto}]}
+{LAT. [^{RUB. texto}]}
+

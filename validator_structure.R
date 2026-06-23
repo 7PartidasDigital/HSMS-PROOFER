@@ -1552,17 +1552,39 @@ check_deletion_insertion_combination_format <- function(filepath) {
   do.call(rbind, lapply(issues, as.data.frame))
 }
 
+
 # =========================================================
 # check_mnemonics_inside_insertions_deletions()
 # ---------------------------------------------------------
 # Regla HSMS:
 #
-#   Un mnemónico nunca puede aparecer dentro de:
+#   En general, un mnemónico no puede aparecer dentro de:
 #
 #     [ ... ]
 #     ( ... )
 #
 #   porque los mnemónicos no son texto.
+#
+# ---------------------------------------------------------
+# Excepción editorial documentada:
+#
+#   Dentro de {AD. ...} y {GL. ...}, la inserción [^ ... ]
+#   puede contener mnemónicos no estructurales, por ejemplo:
+#
+#     {GL. [^{HEB. ...}]}
+#     {GL. [^{LAT. ...}]}
+#     {AD. [^{RUB. ...}]}
+#     {GL. [^{IN1.} Fijas de tiro]}
+#     {GL. [^{SYMB.}]}
+#     {AD. [^{=MIN: occupies 8 lines.}]}
+#     {GL. [^texto {RMK: ... .}]}
+#
+#   Siguen prohibidos dentro de estas inserciones:
+#
+#     CB, HD, CW, SG
+#
+#   porque son mnemónicos estructurales del documento,
+#   no contenido textual de la glosa o adición.
 #
 # =========================================================
 
@@ -1576,6 +1598,10 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
   
   issues <- list()
   
+  structural_tags_not_allowed_in_ad_gl_insertion <- c(
+    "CB", "HD", "CW", "SG"
+  )
+  
   for (line_no in seq_along(lines)) {
     
     line <- lines[[line_no]]
@@ -1585,7 +1611,7 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
     # ---------------------------------------------
     
     bracket_matches <- gregexpr(
-      "\\[[^\\]]*\\{[A-Z=]+[0-9]*[\\.:]",
+      "\\[[^\\]]*\\{=?[A-Za-z]+[0-9]*=?[\\.:]",
       line,
       perl = TRUE
     )[[1]]
@@ -1594,19 +1620,92 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
       
       for (pos in bracket_matches) {
         
+        before_bracket <- substr(
+          line,
+          1,
+          pos - 1
+        )
+        
+        bracket_fragment <- substr(
+          line,
+          pos,
+          nchar(line)
+        )
+        
+        # -----------------------------------------
+        # ¿Es una inserción scribal [^ ... ]?
+        # -----------------------------------------
+        
+        is_scribal_insertion <- grepl(
+          "^\\[\\^",
+          bracket_fragment,
+          perl = TRUE
+        )
+        
+        # -----------------------------------------
+        # ¿La inserción está dentro de AD o GL?
+        # -----------------------------------------
+        #
+        # Esta prueba es deliberadamente local:
+        # busca un {AD. o {GL. abierto antes del
+        # corchete en la misma línea.
+        # -----------------------------------------
+        
+        inside_ad_gl <- grepl(
+          "\\{(AD|GL)\\.[^\\}]*$",
+          before_bracket,
+          perl = TRUE
+        )
+        
+        # -----------------------------------------
+        # Extraer el primer mnemónico encontrado
+        # dentro del corchete.
+        # -----------------------------------------
+        
+        m <- regexec(
+          "\\{=?([A-Za-z]+)[0-9]*=?[\\.:]",
+          bracket_fragment,
+          perl = TRUE
+        )
+        
+        r <- regmatches(
+          bracket_fragment,
+          m
+        )[[1]]
+        
+        tag <- if (length(r) > 0) {
+          toupper(r[[2]])
+        } else {
+          NA_character_
+        }
+        
+        allowed_ad_gl_insertion <-
+          is_scribal_insertion &&
+          inside_ad_gl &&
+          !is.na(tag) &&
+          !tag %in% structural_tags_not_allowed_in_ad_gl_insertion
+        
+        if (allowed_ad_gl_insertion) {
+          next
+        }
+        
         issues[[length(issues) + 1]] <- list(
           line = line_no,
           col = pos,
           type = "mnemonic_inside_insertion",
           text = line,
           explanation =
-            "Los mnemónicos no pueden aparecer dentro de corchetes de inserción."
+            "Los mnemónicos no pueden aparecer dentro de corchetes de inserción, salvo mnemónicos no estructurales dentro de inserciones [^...] en {AD.} o {GL.}."
         )
       }
     }
     
     # ---------------------------------------------
     # Paréntesis
+    # ---------------------------------------------
+    #
+    # La excepción AD/GL afecta solo a inserciones [^...],
+    # no a borrados entre paréntesis.
     # ---------------------------------------------
     
     parenthesis_matches <- gregexpr(
@@ -1683,6 +1782,51 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
     }
     
     for (start_pos in mnemonic_starts) {
+      
+      mnemonic_fragment <- substr(
+        line,
+        start_pos,
+        nchar(line)
+      )
+      
+      m_tag <- regexec(
+        "^\\{=?([A-Za-z]+)[0-9]*=?[\\.:]",
+        mnemonic_fragment,
+        perl = TRUE
+      )
+      
+      r_tag <- regmatches(
+        mnemonic_fragment,
+        m_tag
+      )[[1]]
+      
+      current_tag <- if (length(r_tag) > 0) {
+        toupper(r_tag[[2]])
+      } else {
+        NA_character_
+      }
+      
+      # -------------------------------------------------
+      # Excepción AD/GL
+      # -------------------------------------------------
+      #
+      # Esta función usa una comprobación local sencilla:
+      # considera que el primer "}" cierra el mnemónico.
+      # Eso falla en casos documentados como:
+      #
+      #   {GL. [^{LAT. ...}]}
+      #
+      # porque la primera "}" cierra LAT, no GL.
+      #
+      # AD y GL se dejan a la regla más robusta:
+      #
+      #   check_insertions_deletions_do_not_cross_textual_containers()
+      #
+      # -------------------------------------------------
+      
+      if (!is.na(current_tag) && current_tag %in% c("AD", "GL")) {
+        next
+      }
       
       close_pos_rel <- regexpr(
         "\\}",
