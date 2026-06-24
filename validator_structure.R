@@ -3833,8 +3833,18 @@ check_initial_rmk_identification_block <- function(filepath) {
 #   Del mismo modo, el delimitador ":" solo debe aparecer
 #   tras RMK.
 #
+# ---------------------------------------------------------
+# Excepción: RMK de cabecera
+# ---------------------------------------------------------
+#
+#   Los RMK de cabecera solo se admiten en las seis
+#   primeras líneas del fichero. En esa zona inicial
+#   se permiten puntos y dos puntos internos, porque
+#   pueden formar parte de referencias bibliográficas,
+#   signaturas, abreviaturas, nombres de instituciones
+#   o descripciones documentales.
+#
 # =========================================================
-
 
 check_rmk_internal_punctuation <- function(filepath) {
   
@@ -3860,6 +3870,21 @@ check_rmk_internal_punctuation <- function(filepath) {
     )
     
     if (rmk_match[[1]] == -1) {
+      next
+    }
+    
+    # ---------------------------------------------
+    # RMK de cabecera
+    # ---------------------------------------------
+    #
+    # Los RMK situados en las seis primeras líneas
+    # pueden contener puntuación interna.
+    #
+    # La regla ordinaria de puntos y dos puntos
+    # internos se aplica solo fuera de esa zona.
+    # ---------------------------------------------
+    
+    if (line_no <= 6) {
       next
     }
     
@@ -4016,7 +4041,6 @@ check_rmk_internal_punctuation <- function(filepath) {
   
   do.call(rbind, lapply(issues, as.data.frame))
 }
-
 
 # =========================================================
 # check_backslash_only_inside_hd()
