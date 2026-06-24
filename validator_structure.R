@@ -3428,6 +3428,11 @@ check_rmk_standalone_context <- function(filepath) {
 #   RMK no es un contenedor textual y no puede ser
 #   multilínea.
 #
+#   Una RMK puede estar cerrada y seguida de otro
+#   mnemónico o de texto en la misma línea:
+#
+#     {RMK: HSMS-0555-0001: ... .} {IN2.} Aqui...
+#
 # =========================================================
 
 check_rmk_comment_format <- function(filepath) {
@@ -3475,8 +3480,19 @@ check_rmk_comment_format <- function(filepath) {
     # ---------------------------------------------
     # RMK debe cerrarse en la misma línea física
     # ---------------------------------------------
+    #
+    # No exigimos que la línea termine en "}".
+    # Solo exigimos que el token {RMK: ...} tenga
+    # una llave de cierre en la misma línea.
+    # ---------------------------------------------
     
-    if (!grepl("\\}$", line, perl = TRUE)) {
+    rmk_token_match <- regexpr(
+      "^\\{RMK:[^\\}]*\\}",
+      line,
+      perl = TRUE
+    )
+    
+    if (rmk_token_match == -1) {
       
       issues[[length(issues) + 1]] <- list(
         line = line_no,
@@ -3490,11 +3506,21 @@ check_rmk_comment_format <- function(filepath) {
       next
     }
     
+    rmk_token <- substr(
+      line,
+      rmk_token_match,
+      rmk_token_match + attr(rmk_token_match, "match.length") - 1
+    )
+    
     # ---------------------------------------------
     # RMK debe terminar en punto antes de }
     # ---------------------------------------------
+    #
+    # La comprobación se hace sobre el token RMK,
+    # no sobre la línea completa.
+    # ---------------------------------------------
     
-    if (!grepl("\\.\\}$", line, perl = TRUE)) {
+    if (!grepl("\\.\\}$", rmk_token, perl = TRUE)) {
       
       issues[[length(issues) + 1]] <- list(
         line = line_no,
@@ -3514,7 +3540,7 @@ check_rmk_comment_format <- function(filepath) {
     
     is_header <- line_no < first_folio_line
     
-    if (!is_header && line == "{RMK:.}") {
+    if (!is_header && rmk_token == "{RMK:.}") {
       
       issues[[length(issues) + 1]] <- list(
         line = line_no,
@@ -3543,7 +3569,6 @@ check_rmk_comment_format <- function(filepath) {
     lapply(issues, as.data.frame)
   )
 }
-
 
 # =========================================================
 # check_initial_rmk_identification_block()

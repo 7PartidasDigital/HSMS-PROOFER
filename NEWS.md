@@ -39,6 +39,7 @@
 
 * Relaxed punctuation rules inside `{RMK: ... .}` to allow common abbreviations such as `s.l.` and `s.n.` and identification remarks of the form `HSMS-xxxx-yyyy: ...`.
 * Improved handling of initial RMK blocks before the first folio.
+* Fixed RMK validation so that `{RMK: ...}` may be followed by another mnemonic or text on the same line, provided that the RMK token itself is properly closed and ends with a period.
 
 ### Project
 
