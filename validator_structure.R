@@ -2852,7 +2852,28 @@ check_tag_delimiters <- function(filepath) {
     
     delimiter_is_valid <- expected_delimiter == actual_delimiter
     
-    if (tag %in% c("BLNK", "SYMB") &&
+    # ---------------------------------------------
+    # Excepciones de delimitador
+    # ---------------------------------------------
+    #
+    # Algunos mnemónicos admiten tanto "." como ":"
+    # según su uso concreto.
+    #
+    #   BLNK / SYMB:
+    #     ya estaban documentados como flexibles.
+    #
+    #   DIAG:
+    #     puede usar ":" cuando funciona como campo
+    #     descriptivo o comentario sobre el diagrama:
+    #
+    #       {DIAG: Numeric table follows.}
+    #       {DIAG: scribally deleted.}
+    #       {DIAG: scribally inserted.}
+    #       {DIAG: editorially deleted.}
+    #
+    # ---------------------------------------------
+    
+    if (tag %in% c("BLNK", "SYMB", "DIAG") &&
         actual_delimiter %in% c(".", ":")) {
       delimiter_is_valid <- TRUE
     }

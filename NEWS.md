@@ -24,6 +24,7 @@
 * Added support for inserted pilcrow forms (`[¶]`, `[^¶]`, `[¶2]`, `[^¶2]`, `[¶3]`, `[^¶3]`).
 * Deprecated `check_para_spacing()`, whose functionality has been absorbed into `check_percent_spacing()`.
 * Stopped reporting LF/CRLF/CR line endings as validation issues, since line endings depend on the user’s operating system.
+* Allowed both `.` and `:` as delimiters for `{DIAG}` mnemonics, since `{DIAG: ...}` is used for descriptive comments such as `Numeric table follows.`, `scribally deleted.` or `editorially deleted.`.
 
 ### Structural checks
 
