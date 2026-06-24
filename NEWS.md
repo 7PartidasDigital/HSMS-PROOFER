@@ -34,6 +34,9 @@
 * Added validation of the position of the backslash within heading mnemonics.
 * Added validation of calderon spacing based on complete tokens rather than isolated `%` symbols.
 * Added validation of combined deletion–insertion structures `(x)[y]`.
+* Added `≺` and `≻` as the current markers for real parentheses.
+* Marked legacy `((` and `))` as obsolete real-parenthesis markers.
+* Stopped validating spacing for legacy `((...))`, which is now kept only as a historical fossil.
 
 ### RMK
 

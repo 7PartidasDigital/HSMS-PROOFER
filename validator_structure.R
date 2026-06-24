@@ -291,6 +291,18 @@ hsms_structural_tag_catalog <- function() {
 #
 #   PROOFER.FNC / PROOFER_FUNCTIONAL.txt
 #
+# ---------------------------------------------------------
+# Nota histórica
+# ---------------------------------------------------------
+#
+#   La convención ((...)) para supresiones extendidas
+#   queda obsoleta. Se conserva en el catálogo como
+#   fósil histórico.
+#
+#   La convención vigente para supresiones extendidas es:
+#
+#     ≺ ... ≻
+#
 # =========================================================
 
 hsms_functional_character_catalog <- function() {
@@ -304,6 +316,7 @@ hsms_functional_character_catalog <- function() {
       "<", ">",
       "<<", ">>",
       "((", "))",
+      "≺", "≻",
       "^", "##",
       "??", "???",
       "%", "-", "$", "[...]", "[+]", "*", "|"
@@ -319,7 +332,10 @@ hsms_functional_character_catalog <- function() {
       "begin_deleted_text", "end_deleted_text",
       "begin_abbreviation", "end_abbreviation",
       "begin_suprascript", "end_suprascript",
-      "begin_parenthesis", "end_parenthesis",
+      "obsolete_begin_real_parenthesis",
+      "obsolete_end_ereal_parenthesis",
+      "begin_real_parenthesis",
+      "end_real_parenthesis",
       "scribal_hand", "non_original_scribal_hand",
       "illegible_word_or_part",
       "illegible_phrase",
@@ -339,6 +355,7 @@ hsms_functional_character_catalog <- function() {
       14, NA,
       16, NA,
       18, NA,
+      32, NA,
       20, 21,
       23, 24,
       25, 26, 27, 28, 29, 30, 31
@@ -351,6 +368,7 @@ hsms_functional_character_catalog <- function() {
       NA, 15,
       NA, 17,
       NA, 19,
+      NA, 33,
       NA, NA,
       NA, NA,
       NA, NA, NA, NA, NA, NA, NA
@@ -2070,7 +2088,29 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
       }
       
       # ---------------------------------------------
-      # No tratar ((...)) como borrado
+      # Fósil histórico: no tratar ((...)) como borrado
+      # ---------------------------------------------
+      #
+      # En una fase anterior, los paréntesis reales del texto
+      # se representaban mediante:
+      #
+      #   (( ... ))
+      #
+      # Esto podía producir falsos errores de balanceo, porque
+      # podían abrirse en una columna y cerrarse en otra, y además
+      # entraba en conflicto con la regla que interpreta:
+      #
+      #   ( ... )
+      #
+      # como borrado.
+      #
+      # La convención vigente para paréntesis reales es:
+      #
+      #   ≺ ... ≻
+      #
+      # Se conserva esta excepción únicamente para no interpretar
+      # "((" y "))" como dos borrados ordinarios anidados en
+      # ficheros antiguos.
       # ---------------------------------------------
       
       if (ch == "(" && next_ch == "(") {
@@ -2208,23 +2248,39 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
 # =========================================================
 # check_double_parenthesis_spacing()
 # ---------------------------------------------------------
-# Regla estructural/editorial HSMS:
+# OBSOLETA / FÓSIL HISTÓRICO.
 #
-#   ((...)) representa paréntesis literal, no borrado.
+# En una fase anterior, los paréntesis reales del texto
+# se representaban mediante:
+#
+#   (( ... ))
+#
+# Esta convención ha sido sustituida por:
+#
+#   ≺ ... ≻
+#
+# Por tanto, ((...)) ya no debe usarse en nuevas
+# transcripciones.
 #
 # ---------------------------------------------------------
-# Reglas validadas:
+# Motivo de la obsolescencia:
 #
-#   - No puede estar vacío: (())
-#   - No debe haber espacio inmediatamente después de "(("
-#   - No debe haber espacio inmediatamente antes de "))"
+#   ((...)) podía producir falsos errores de balanceo,
+#   especialmente cuando el paréntesis real se abría en
+#   una columna y se cerraba en otra.
+#
+#   Además, entraba en conflicto con la regla HSMS según
+#   la cual:
+#
+#     ( ... )
+#
+#   representa un borrado.
 #
 # ---------------------------------------------------------
-# Nota:
+# Estado actual:
 #
-#   Esta regla NO exige que ((...)) cierre en la misma línea.
-#   El balanceo general de (( y )) pertenece a
-#   check_balanced_pairs().
+#   Esta función se conserva solo como memoria histórica.
+#   No debe llamarse en la validación normal.
 #
 # =========================================================
 
@@ -5481,20 +5537,35 @@ check_structure <- function(filepath) {
   # -------------------------------------------------
   # 0-pre-decies. Formato de ((...))
   # -------------------------------------------------
-  
-  double_parenthesis_issues <-
-    check_double_parenthesis_spacing(filepath)
-  
-  if (nrow(double_parenthesis_issues) > 0) {
-    
-    issues <- c(
-      issues,
-      split(
-        double_parenthesis_issues,
-        seq_len(nrow(double_parenthesis_issues))
-      )
-    )
-  }
+  #
+  # OBSOLETO / FÓSIL HISTÓRICO.
+  #
+  # La convención ((...)) para paréntesis reales ha sido
+  # sustituida por:
+  #
+  #   ≺ ... ≻
+  #
+  # No se valida el balanceo ni el espaciado de ≺...≻,
+  # porque estos paréntesis reales pueden atravesar límites
+  # de columna o de división textual.
+  #
+  # La función check_double_parenthesis_spacing() se conserva
+  # únicamente como memoria histórica, pero no se llama en la
+  # validación normal.
+  #
+  # double_parenthesis_issues <-
+  #   check_double_parenthesis_spacing(filepath)
+  #
+  # if (nrow(double_parenthesis_issues) > 0) {
+  #   
+  #   issues <- c(
+  #     issues,
+  #     split(
+  #       double_parenthesis_issues,
+  #       seq_len(nrow(double_parenthesis_issues))
+  #     )
+  #   )
+  # }
   
   # -------------------------------------------------
   # 0. Etiquetas estructurales desconocidas
