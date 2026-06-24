@@ -25,6 +25,7 @@
 * Deprecated `check_para_spacing()`, whose functionality has been absorbed into `check_percent_spacing()`.
 * Stopped reporting LF/CRLF/CR line endings as validation issues, since line endings depend on the user’s operating system.
 * Allowed both `.` and `:` as delimiters for `{DIAG}` mnemonics, since `{DIAG: ...}` is used for descriptive comments such as `Numeric table follows.`, `scribally deleted.` or `editorially deleted.`.
+* Allowed internal punctuation in `{RMK: ...}` remarks placed in the first six lines of the file, since initial remarks may contain bibliographical descriptions, shelfmarks, abbreviations and institutional names.
 
 ### Structural checks
 
