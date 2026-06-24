@@ -219,7 +219,7 @@ check_percent_spacing <- function(filepath) {
   
   issues <- list()
   
-  token_pattern <- "\\[\\^?%[23]?\\]|%[23]?"
+  token_pattern <- "\\[(?:\\^[0-9]*#?)?%[23]?\\]|%[23]?"
   
   for (line_no in seq_along(lines)) {
     
