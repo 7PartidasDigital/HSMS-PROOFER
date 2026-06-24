@@ -118,24 +118,17 @@ check_file_technical <- function(filepath,
   # -------------------------------------------------
   # 3. Saltos de línea
   # -------------------------------------------------
+  #
+  # OBSOLETO / INFORMATIVO.
+  #
+  # Los saltos de línea dependen del sistema operativo.
+  # No se consideran una incidencia HSMS.
+  #
+  # La función fix_line_endings() se conserva como
+  # herramienta manual, pero Proofer no informa de
+  # CRLF/CR como error.
+  # -------------------------------------------------
   
-  has_crlf <- any(
-    raw[-length(raw)] == as.raw(0x0D) &
-      raw[-1] == as.raw(0x0A)
-  )
-  
-  has_cr <- any(raw == as.raw(0x0D))
-  
-  if (has_crlf || has_cr) {
-    
-    issues[[length(issues) + 1]] <- list(
-      line = NA_integer_,
-      type = "line_endings_not_lf",
-      text = uploaded_name,
-      explanation =
-        "El fichero debe usar saltos de línea LF. Se detectaron CRLF o CR."
-    )
-  }
   
   # -------------------------------------------------
   # 4. UTF-8

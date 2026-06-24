@@ -4,7 +4,7 @@
 
 ### Performance
 
-* Validation of large files (≈400 KB, ≈8500 lines) completes in approximately half the time required by the legacy DOS Proofer.
+* Preliminary tests suggest that HSMS Proofer processes large transcriptions efficiently when compared with the legacy DOS Proofer.
 
 ### Interface
 
@@ -22,9 +22,8 @@
 * Added detection of Unicode combining diacritics to discourage manually composed characters and favour precomposed Unicode forms.
 * Added support for pilcrow characters (`¶`, `¶2`, `¶3`) as Unicode equivalents of the traditional HSMS symbols (`%`, `%2`, `%3`).
 * Added support for inserted pilcrow forms (`[¶]`, `[^¶]`, `[¶2]`, `[^¶2]`, `[¶3]`, `[^¶3]`).
-* Obsoleted `check_para_spacing()`, whose functionality has been absorbed into `check_percent_spacing()`.
-* Allowed non-structural mnemonics inside scribal insertions within `{GL.}` and `{AD.}` containers.
-* Kept structural mnemonics such as `{CB.}`, `{HD.}`, `{CW.}` and `{SG.}` prohibited inside such insertions.
+* Deprecated `check_para_spacing()`, whose functionality has been absorbed into `check_percent_spacing()`.
+* Stopped reporting LF/CRLF/CR line endings as validation issues, since line endings depend on the user’s operating system.
 
 ### Structural checks
 
@@ -34,6 +33,8 @@
 * Added validation of the position of the backslash within heading mnemonics.
 * Added validation of calderon spacing based on complete tokens rather than isolated `%` symbols.
 * Added validation of combined deletion–insertion structures `(x)[y]`.
+* Allowed non-structural mnemonics inside scribal insertions within `{GL.}` and `{AD.}` containers.
+* Kept structural mnemonics such as `{CB.}`, `{HD.}`, `{CW.}` and `{SG.}` prohibited inside such insertions.
 * Added `≺` and `≻` as the current markers for real parentheses.
 * Marked legacy `((` and `))` as obsolete real-parenthesis markers.
 * Stopped validating spacing for legacy `((...))`, which is now kept only as a historical fossil.
