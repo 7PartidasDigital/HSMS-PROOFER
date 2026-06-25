@@ -1833,12 +1833,19 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
       # Eso falla en casos documentados como:
       #
       #   {GL. [^{LAT. ...}]}
+      #   {GL. [^Canonico. {RMK: marginal gloss in Latin.}]}
       #
-      # porque la primera "}" cierra LAT, no GL.
+      # porque la primera "}" puede cerrar un mnemónico
+      # interno, no GL.
       #
-      # AD y GL se dejan a la regla más robusta:
+      # AD y GL tienen una excepción editorial específica:
+      # pueden contener inserciones escribales [^ ... ] con
+      # mnemónicos no estructurales internos.
       #
-      #   check_insertions_deletions_do_not_cross_textual_containers()
+      # Los errores reales en estos casos quedan cubiertos por:
+      #
+      #   - check_mnemonics_inside_insertions_deletions()
+      #   - check_balanced_pairs()
       #
       # -------------------------------------------------
       
@@ -1946,6 +1953,7 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
   do.call(rbind, lapply(issues, as.data.frame))
 }
 
+
 # =========================================================
 # check_insertions_deletions_do_not_cross_textual_containers()
 # ---------------------------------------------------------
@@ -1959,16 +1967,34 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
 # Contenedores textuales:
 #
 #   CB, CW, DIAG, HD, MIN, RUB, SYMB, SG,
-#   AD, GL,
 #   etiquetas de lengua.
 #
 # ---------------------------------------------------------
 # No incluye:
 #
+#   AD
+#   GL
 #   BLNK
 #   IN
 #   ILL
 #   RMK
+#
+# ---------------------------------------------------------
+# Nota sobre AD, GL y RMK:
+#
+#   AD y GL se excluyen de esta regla general porque
+#   pueden contener inserciones escribales [^ ... ] con
+#   mnemónicos no estructurales internos, por ejemplo:
+#
+#     {GL. [^Canonico. {RMK: marginal gloss in Latin.}]}
+#     {AD. [^{RUB. texto añadido}]}
+#
+#   Además, esta función no debe interpretar la llave que
+#   cierra un RMK interno como si cerrara el contenedor
+#   textual exterior.
+#
+#   Por eso, ciertos mnemónicos cerrados en la misma línea
+#   se saltan como bloque completo.
 #
 # ---------------------------------------------------------
 # Nota:
@@ -1987,14 +2013,39 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
   
   textual_containers <- c(
     "CB", "CW", "DIAG", "HD", "MIN", "RUB", "SYMB", "SG",
-    "AD", "GL",
     "ARB", "ARG", "ARM", "BAS", "CAL", "CAT", "ENG",
     "FRN", "GAL", "GER", "GRK", "HEB", "ITL", "LAM",
     "LAT", "PRT", "PRV"
   )
   
+  skip_as_block <- c(
+    "AD", "GL", "RMK", "BLNK", "IN", "ILL"
+  )
+  
   folio_pattern <- "^\\[fol\\.\\s*[0-9]{1,4}[rv]\\]$"
   mnemonic_pattern <- "^\\{=?([A-Za-z]+)[0-9]*=?[\\.:]"
+  
+  find_matching_brace <- function(chars, start_index) {
+    
+    depth <- 0
+    
+    for (j in seq(from = start_index, to = length(chars))) {
+      
+      if (chars[[j]] == "{") {
+        depth <- depth + 1
+      }
+      
+      if (chars[[j]] == "}") {
+        depth <- depth - 1
+        
+        if (depth == 0) {
+          return(j)
+        }
+      }
+    }
+    
+    NA_integer_
+  }
   
   issues <- list()
   
@@ -2029,7 +2080,7 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
       rest <- substr(line, i, nchar(line))
       
       # ---------------------------------------------
-      # Apertura de mnemónico textual
+      # Apertura de mnemónico
       # ---------------------------------------------
       
       m <- regexec(
@@ -2043,6 +2094,28 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
       if (length(r) > 0) {
         
         tag <- toupper(r[[2]])
+        
+        # ---------------------------------------------
+        # Mnemónicos que se saltan como bloque completo
+        # ---------------------------------------------
+        #
+        # Esto evita que la llave de cierre de un RMK
+        # interno sea interpretada como cierre del
+        # contenedor textual exterior.
+        # ---------------------------------------------
+        
+        if (tag %in% skip_as_block) {
+          
+          close_pos <- find_matching_brace(
+            chars = chars,
+            start_index = i
+          )
+          
+          if (!is.na(close_pos)) {
+            i <- close_pos + 1
+            next
+          }
+        }
         
         if (tag %in% textual_containers) {
           
@@ -2089,28 +2162,6 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
       
       # ---------------------------------------------
       # Fósil histórico: no tratar ((...)) como borrado
-      # ---------------------------------------------
-      #
-      # En una fase anterior, los paréntesis reales del texto
-      # se representaban mediante:
-      #
-      #   (( ... ))
-      #
-      # Esto podía producir falsos errores de balanceo, porque
-      # podían abrirse en una columna y cerrarse en otra, y además
-      # entraba en conflicto con la regla que interpreta:
-      #
-      #   ( ... )
-      #
-      # como borrado.
-      #
-      # La convención vigente para paréntesis reales es:
-      #
-      #   ≺ ... ≻
-      #
-      # Se conserva esta excepción únicamente para no interpretar
-      # "((" y "))" como dos borrados ordinarios anidados en
-      # ficheros antiguos.
       # ---------------------------------------------
       
       if (ch == "(" && next_ch == "(") {

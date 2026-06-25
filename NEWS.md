@@ -40,6 +40,7 @@
 * Added `≺` and `≻` as the current markers for real parentheses.
 * Marked legacy `((` and `))` as obsolete real-parenthesis markers.
 * Stopped validating spacing for legacy `((...))`, which is now kept only as a historical fossil.
+* Clarified the handling of `{GL.}` and `{AD.}` insertions in container-crossing checks, avoiding false reports when non-structural internal mnemonics such as `{RMK: ...}` occur inside scribal insertions.
 
 ### RMK
 
