@@ -423,8 +423,9 @@ output$issues_table <- renderDT({
       rownames = FALSE,
       selection = "single",
       options = list(
-        pageLength = 25,
-        scrollX = TRUE
+        pageLength = 10,
+        scrollX = TRUE,
+        searching = FALSE
       )
     )
   })
