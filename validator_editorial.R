@@ -219,7 +219,7 @@ check_percent_spacing <- function(filepath) {
   
   issues <- list()
   
-  token_pattern <- "\\[(?:\\^[0-9]*#?)?%[23]?\\]|%[23]?"
+  token_pattern <- "\\[(?:\\^[0-9]*#?)?%[23]?\\]|%%|%[23]?"
   
   for (line_no in seq_along(lines)) {
     
@@ -320,6 +320,89 @@ check_percent_spacing <- function(filepath) {
       as.data.frame
     )
   )
+}
+
+# =========================================================
+# check_double_calderon_marker()
+# ---------------------------------------------------------
+# Regla editorial HSMS:
+#
+#   En algunos impresos pueden aparecer dos calderones
+#   consecutivos:
+#
+#     ¶¶
+#
+#   Internamente, "¶" se trata como equivalente de "%".
+#   Por tanto:
+#
+#     ¶¶ == %%
+#
+# ---------------------------------------------------------
+# Interpretación:
+#
+#   Dos calderones consecutivos pueden ser una marca
+#   impresa intencional, pero también una duplicación
+#   accidental del cajista.
+#
+#   Proofer no decide: solo señala el caso para revisión.
+#
+# =========================================================
+
+check_double_calderon_marker <- function(filepath) {
+  
+  lines <- readLines(
+    filepath,
+    encoding = "UTF-8",
+    warn = FALSE
+  )
+  
+  issues <- list()
+  
+  for (line_no in seq_along(lines)) {
+    
+    line_original <- lines[[line_no]]
+    
+    line_for_check <- chartr(
+      "¶",
+      "%",
+      line_original
+    )
+    
+    double_positions <- gregexpr(
+      "%%",
+      line_for_check,
+      fixed = TRUE
+    )[[1]]
+    
+    if (double_positions[1] == -1) {
+      next
+    }
+    
+    for (pos in double_positions) {
+      
+      issues[[length(issues) + 1]] <- list(
+        line = line_no,
+        col = pos,
+        type = "double_calderon_marker",
+        text = line_original,
+        explanation =
+          "Se han detectado dos calderones consecutivos. Puede tratarse de una marca impresa intencional o de una duplicación accidental del cajista; revísese editorialmente."
+      )
+    }
+  }
+  
+  if (length(issues) == 0) {
+    
+    return(data.frame(
+      line = integer(0),
+      col = integer(0),
+      type = character(0),
+      text = character(0),
+      explanation = character(0)
+    ))
+  }
+  
+  do.call(rbind, lapply(issues, as.data.frame))
 }
 
 
@@ -1819,6 +1902,7 @@ check_editorial <- function(filepath) {
   
   editorial_issues <- list(
     check_ellipsis(filepath),
+    check_double_calderon_marker(filepath),
     check_percent_spacing(filepath),
     #check_para_spacing(filepath),
     check_double_spaces(filepath),
