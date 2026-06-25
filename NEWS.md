@@ -27,6 +27,7 @@
 * Allowed both `.` and `:` as delimiters for `{DIAG}` mnemonics, since `{DIAG: ...}` is used for descriptive comments such as `Numeric table follows.`, `scribally deleted.` or `editorially deleted.`.
 * Allowed internal punctuation in `{RMK: ...}` remarks placed in the first six lines of the file, since initial remarks may contain bibliographical descriptions, shelfmarks, abbreviations and institutional names.
 * Added a warning for consecutive calderon markers (`¶¶`, internally equivalent to `%%`), since they may represent either an intentional printed feature or an accidental duplication requiring editorial review.
+* Standardized structural validation outputs before combining them, preventing report-generation crashes when different structural checks return issue tables with slightly different column sets.
 
 ### Structural checks
 

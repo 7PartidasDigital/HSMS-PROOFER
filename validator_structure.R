@@ -6237,12 +6237,23 @@ check_structure <- function(filepath) {
     
     return(data.frame(
       line = integer(0),
+      col = integer(0),
       type = character(0),
       text = character(0),
       explanation = character(0)
     ))
   }
   
-  do.call(rbind, lapply(issues, as.data.frame))
+  issues <- lapply(
+    issues,
+    as.data.frame,
+    stringsAsFactors = FALSE
+  )
+  
+  issues <- lapply(
+    issues,
+    standardize_issues
+  )
+  
+  do.call(rbind, issues)
 }
-
