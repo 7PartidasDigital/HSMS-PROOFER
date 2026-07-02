@@ -1010,7 +1010,7 @@ check_multiple_blank_lines <- function(filepath) {
 # =========================================================
 
 check_line_length <- function(filepath,
-                              max_length = 256) {
+                              max_length = 150) {
   
   lines <- readLines(
     filepath,
@@ -1073,7 +1073,7 @@ check_line_length <- function(filepath,
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   Los mnemónicos HSMS deben escribirse en mayúsculas.
+#   Las etiquetas HSMS deben escribirse en mayúsculas.
 #
 # ---------------------------------------------------------
 # Objetivo
@@ -1166,7 +1166,7 @@ check_mnemonic_uppercase <- function(filepath) {
           type = "mnemonic_not_uppercase",
           text = line,
           explanation = paste0(
-            "El mnemónico {",
+            "La etiqueta {",
             tag_raw,
             " debe escribirse en mayúsculas."
           )
@@ -1276,12 +1276,12 @@ check_illegible_marker_length <- function(filepath) {
 # Regla editorial/funcional HSMS:
 #
 #   El signo "+" indica continuación lógica del texto
-#   contenido en un mnemónico.
+#   contenido en una etiqueta.
 #
 # Reglas:
 #
 #   1. Debe aparecer como " +}".
-#   2. El mnemónico debe permitir continuación según
+#   2. La etiqueta debe permitir continuación según
 #      hsms_structural_tag_catalog()$can_continue.
 #   3. Se ignora "[+]", que es otro signo funcional.
 #
@@ -1359,14 +1359,14 @@ check_mnemonic_continuation_plus <- function(filepath) {
           type = "invalid_mnemonic_continuation_plus",
           text = line,
           explanation =
-            "El signo '+' de continuación debe escribirse como ' +}' al final del mnemónico."
+            "El signo '+' de continuación debe escribirse como ' +}' al final de la etiqueta."
         )
         
         next
       }
       
       # ---------------------------------------------
-      # Localizar mnemónico que contiene el +
+      # Localizar la etiqueta que contiene el +
       # ---------------------------------------------
       
       line_mnemonics <- mnemonics[
@@ -1384,7 +1384,7 @@ check_mnemonic_continuation_plus <- function(filepath) {
           type = "continuation_plus_without_mnemonic",
           text = line,
           explanation =
-            "El signo '+' de continuación debe pertenecer a un mnemónico."
+            "El signo '+' de continuación debe pertenecer a una etiqueta."
         )
         
         next
@@ -1445,8 +1445,8 @@ check_mnemonic_continuation_plus <- function(filepath) {
 # ---------------------------------------------------------
 # Regla editorial/funcional HSMS:
 #
-#   Si un mnemónico textual termina con " +}", debe existir
-#   posteriormente otro mnemónico del mismo tipo.
+#   Si una etiqueta textual termina con " +}", debe existir
+#   posteriormente otra etiqueta del mismo tipo.
 #
 # ---------------------------------------------------------
 # Notas:
@@ -1454,7 +1454,7 @@ check_mnemonic_continuation_plus <- function(filepath) {
 #   - La posibilidad de continuación se toma del catálogo:
 #       can_continue == TRUE
 #
-#   - Se excluyen explícitamente mnemónicos no textuales
+#   - Se excluyen explícitamente etiquetas no textuales
 #     o estructurales como CB, CW y SG.
 #
 # =========================================================
@@ -1565,7 +1565,7 @@ check_mnemonic_continuation_target <- function(filepath) {
         explanation = paste0(
           "La etiqueta {",
           tag,
-          " termina con ' +}', pero no se encontró otro mnemónico {",
+          " termina con ' +}', pero no se encontró otra etiqueta {",
           tag,
           " posterior para continuar el texto."
         )
@@ -1593,13 +1593,13 @@ check_mnemonic_continuation_target <- function(filepath) {
 # Regla editorial/funcional HSMS:
 #
 #   El signo "=" tiene función especial en PROOFER:
-#   marca vector en los mnemónicos que lo permiten.
+#   marca vector en las etiquetas que lo permiten.
 #
 # ---------------------------------------------------------
 # Regla aplicada:
 #
 #   "=" solo puede aparecer como prefijo o sufijo
-#   funcional si el catálogo HSMS lo permite.
+#   funcional si el catálogo lo permite.
 #
 # Actualmente lo permiten:
 #
@@ -1703,8 +1703,8 @@ check_mnemonic_vector_equals <- function(filepath) {
   }
   
   # -------------------------------------------------
-  # Detectar signos "=" que no pertenecen a ningún
-  # mnemónico reconocido por extract_hsms_mnemonics().
+  # Detectar signos "=" que no pertenecen a ninguna
+  # etiqueta reconocida por extract_hsms_mnemonics().
   # -------------------------------------------------
   
   for (line_no in seq_along(lines)) {
@@ -1767,7 +1767,7 @@ check_mnemonic_vector_equals <- function(filepath) {
           type = "invalid_mnemonic_vector_equals",
           text = line,
           explanation =
-            "El signo '=' solo debe usarse como vector dentro de un mnemónico que lo permita."
+            "El signo '=' solo debe usarse como vector dentro de una etiqueta que lo permita."
         )
       }
     }
@@ -1792,7 +1792,7 @@ check_mnemonic_vector_equals <- function(filepath) {
 # ---------------------------------------------------------
 # Regla editorial/funcional HSMS:
 #
-#   Los mnemónicos {AD. y {GL. tienen procesamiento
+#   Las etiquetas {AD. y {GL. tienen procesamiento
 #   especial en PROOFER.
 #
 # Deben ir seguidos de:

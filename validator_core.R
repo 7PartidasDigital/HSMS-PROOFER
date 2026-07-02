@@ -328,7 +328,7 @@ tokenize_balanced_chars <- function(line) {
 #   <  >    abreviatura
 #   (  )    texto eliminado
 #   [  ]    texto insertado
-#   {  }    mnemónicos / etiquetas
+#   {  }    etiquetas
 #
 # ---------------------------------------------------------
 # Objetivo

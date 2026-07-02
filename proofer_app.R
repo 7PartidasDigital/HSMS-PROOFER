@@ -92,7 +92,7 @@ ui <- navbarPage(
   
   tabPanel(
     
-    "Validation",
+    "Validación / Validation",
     
     sidebarLayout(
       
@@ -100,7 +100,7 @@ ui <- navbarPage(
         
         fileInput(
           inputId = "file",
-          label = "Select transcription file",
+          label = "Seleccionar fichero transcripción / Select transcription file",
           accept = c(".txt", "text/plain")
         ),
         
@@ -108,7 +108,7 @@ ui <- navbarPage(
         
         downloadButton(
           outputId = "download_tsv",
-          label = "Download TSV report"
+          label = "Descargar informe / Download report (TSV)"
         ),
         
         br(),
@@ -116,13 +116,13 @@ ui <- navbarPage(
         
         downloadButton(
           outputId = "download_txt",
-          label = "Download TXT report"
+          label = "Descargar informe / Download report (TXT)"
         )
       ),
       
       mainPanel(
         
-        h3("Validation results"),
+        h3("Resultados de la validación / Validation results"),
         
         uiOutput("summary"),
         
@@ -135,7 +135,7 @@ ui <- navbarPage(
   
   tabPanel(
     
-    "About",
+    "Acerca de / About",
     
     fluidPage(
       
@@ -272,14 +272,14 @@ server <- function(input, output, session) {
     
     withProgress(
       
-      message = "Validating file / Validando fichero",
-      detail = "Please wait. Large files may take several minutes. / Espere, por favor. Los ficheros grandes pueden tardar varios minutos.",
+      message = "Validando transcripción / Validating transcription",
+      detail = "Espere, por favor. Los ficheros grandes pueden tardar varios minutos. / Please wait. Large files may take several minutes.",
       value = 0,
       
       {
         incProgress(
           0.2,
-          detail = "Reading and checking file / Leyendo y comprobando el fichero"
+          detail = "Leyendo y comprobando el fichero / Reading and checking file."
         )
         
         result <- validate_file(
@@ -289,7 +289,7 @@ server <- function(input, output, session) {
         
         incProgress(
           0.8,
-          detail = "Preparing report / Preparando el informe"
+          detail = "Preparando el informe / Preparing report."
         )
         
         result
@@ -323,8 +323,8 @@ server <- function(input, output, session) {
       return(
         tags$p(
           HTML(
-            "Select a TXT file to start validation.<br/>
-           Seleccione un fichero TXT para iniciar la validación."
+            "Seleccione un fichero TXT para iniciar la validación.<br/>
+           Select a TXT file to start validation."
           )
         )
       )
@@ -339,8 +339,7 @@ server <- function(input, output, session) {
         h4(
           style = "color: #228B22;",
           HTML(
-            "&#10004; No issues detected.<br/>
-           No se han detectado incidencias."
+            "&#10004; No se han detectado incidencias.<br/>&#10004; No issues detected."
           )
         ),
         
@@ -350,8 +349,8 @@ server <- function(input, output, session) {
               "<strong>",
               input$file$name,
               "</strong><br/>",
-              "Successfully validated.<br/>",
-              "Validación completada correctamente."
+              "Validación completada correctamente.<br/>",
+              "Successfully validated."
             )
           )
         )
@@ -367,9 +366,10 @@ server <- function(input, output, session) {
             paste0(
               "&#9888; ",
               nrow(df),
-              " issue(s) detected.<br/>",
+              " incidencia(s) detectada(s).<br/>",
+			  "&#9888; ",
               nrow(df),
-              " incidencia(s) detectada(s)."
+              " issue(s) detected."
             )
           )
         ),
@@ -380,8 +380,9 @@ server <- function(input, output, session) {
               "<strong>",
               input$file$name,
               "</strong><br/>",
-              "Validation completed with issues.<br/>",
-              "Validación completada con incidencias."
+              "Validación completada con incidencias.<br/>",
+			  "Validation completed with issues."
+              
             )
           )
         )
@@ -406,7 +407,7 @@ server <- function(input, output, session) {
       
       br(),
       
-      h4("Diagnostic preview"),
+      h4("Diagnóstico / Diagnostic"),
       
       verbatimTextOutput("diagnostic_preview")
       
@@ -483,11 +484,11 @@ output$issues_table <- renderDT({
       
       if (nrow(df) == 0) {
         report <- paste(
-          "HSMS Proofer report",
+          "HSMS Proofer informe / HSMS Proofer report",
           "",
           paste0("File: ", input$file$name),
           "",
-          "No issues detected.",
+          "No se detectaron incidencias / No issues detected.",
           sep = "\n"
         )
       } else {
@@ -498,10 +499,10 @@ output$issues_table <- renderDT({
         )
         
         report <- paste(
-          "HSMS Proofer report",
+          "HSMS Proofer informe / HSMS Proofer report",
           "",
-          paste0("File: ", input$file$name),
-          paste0("Issues: ", nrow(df)),
+          paste0("Fichero / File: ", input$file$name),
+          paste0("Incidencias / Issues: ", nrow(df)),
           "",
           paste(diagnostics, collapse = "\n\n"),
           sep = "\n"

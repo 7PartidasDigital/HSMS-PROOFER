@@ -187,7 +187,7 @@ hsms_structural_tag_catalog <- function() {
     ),
     # allows_empty:
     #
-    # TRUE  -> el mnemónico puede aparecer sin contenido
+    # TRUE  -> la etiqueta puede aparecer sin contenido
     # FALSE -> debe contener texto, comentario editorial
     #          o alguna estructura válida.
     allows_empty = c(
@@ -380,7 +380,7 @@ hsms_functional_character_catalog <- function() {
 # =========================================================
 # extract_hsms_mnemonics()
 # ---------------------------------------------------------
-# Extrae mnemónicos HSMS presentes en un vector de líneas.
+# Extrae etiquetas HSMS presentes en un vector de líneas.
 #
 # ---------------------------------------------------------
 # Objetivo
@@ -910,9 +910,9 @@ check_angle_delimiter_contents <- function(filepath) {
 # Regla estructural/editorial HSMS:
 #
 #   [ ... ]  inserción editorial
-#   [^... ]  inserción escribal
+#   [^... ]  inserción del copista
 #   ( ... )  borrado editorial
-#   (^... )  borrado escribal
+#   (^... )  borrado del copista
 #
 # ---------------------------------------------------------
 # Reglas validadas:
@@ -992,7 +992,7 @@ check_insertion_deletion_marker_format <- function(filepath) {
     }
     
     # ---------------------------------------------
-    # Inserción escribal con espacio tras ^
+    # Inserción del copista con espacio tras ^
     # ---------------------------------------------
     
     pos <- regexpr("\\[\\^\\s", line, perl = TRUE)[[1]]
@@ -1005,12 +1005,12 @@ check_insertion_deletion_marker_format <- function(filepath) {
         type = "space_after_scribal_insertion_caret",
         text = line,
         explanation =
-          "En una inserción escribal, el texto debe seguir inmediatamente a '[^' sin espacio."
+          "En una inserción del copista, el texto debe seguir inmediatamente a '[^' sin espacio."
       )
     }
     
     # ---------------------------------------------
-    # Borrado escribal con espacio tras ^
+    # Borrado del copista con espacio tras ^
     # ---------------------------------------------
     
     pos <- regexpr("\\(\\^\\s", line, perl = TRUE)[[1]]
@@ -1023,7 +1023,7 @@ check_insertion_deletion_marker_format <- function(filepath) {
         type = "space_after_scribal_deletion_caret",
         text = line,
         explanation =
-          "En un borrado escribal, el texto debe seguir inmediatamente a '(^' sin espacio."
+          "En un borrado del copista, el texto debe seguir inmediatamente a '(^' sin espacio."
       )
     }
     
@@ -1576,18 +1576,18 @@ check_deletion_insertion_combination_format <- function(filepath) {
 # ---------------------------------------------------------
 # Regla HSMS:
 #
-#   En general, un mnemónico no puede aparecer dentro de:
+#   En general, una etiqueta no puede aparecer dentro de:
 #
 #     [ ... ]
 #     ( ... )
 #
-#   porque los mnemónicos no son texto.
+#   porque las etiquetas no son texto.
 #
 # ---------------------------------------------------------
 # Excepción editorial documentada:
 #
 #   Dentro de {AD. ...} y {GL. ...}, la inserción [^ ... ]
-#   puede contener mnemónicos no estructurales, por ejemplo:
+#   puede contener etiquetas no estructurales, por ejemplo:
 #
 #     {GL. [^{HEB. ...}]}
 #     {GL. [^{LAT. ...}]}
@@ -1601,7 +1601,7 @@ check_deletion_insertion_combination_format <- function(filepath) {
 #
 #     CB, HD, CW, SG
 #
-#   porque son mnemónicos estructurales del documento,
+#   porque son etiquetas estructurales del documento,
 #   no contenido textual de la glosa o adición.
 #
 # =========================================================
@@ -1676,7 +1676,7 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
         )
         
         # -----------------------------------------
-        # Extraer el primer mnemónico encontrado
+        # Extraer la primera etiqueta encontrada
         # dentro del corchete.
         # -----------------------------------------
         
@@ -1713,7 +1713,7 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
           type = "mnemonic_inside_insertion",
           text = line,
           explanation =
-            "Los mnemónicos no pueden aparecer dentro de corchetes de inserción, salvo mnemónicos no estructurales dentro de inserciones [^...] en {AD.} o {GL.}."
+            "Las etiquetas no pueden aparecer dentro de corchetes de inserción, salvo etiquetas no estructurales dentro de inserciones [^...] en {AD.} o {GL.}."
         )
       }
     }
@@ -1742,7 +1742,7 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
           type = "mnemonic_inside_deletion",
           text = line,
           explanation =
-            "Los mnemónicos no pueden aparecer dentro de paréntesis de borrado."
+            "Las etiquetas no pueden aparecer dentro de paréntesis de borrado."
         )
       }
     }
@@ -1768,8 +1768,8 @@ check_mnemonics_inside_insertions_deletions <- function(filepath) {
 # Regla HSMS:
 #
 #   Los corchetes [ ] y paréntesis ( ) abiertos dentro
-#   de un mnemónico deben cerrarse antes de la llave "}"
-#   que cierra ese mismo mnemónico.
+#   de una etiqueta deben cerrarse antes de la llave "}"
+#   que cierra esa misma etiqueta.
 #
 # =========================================================
 
@@ -1829,18 +1829,18 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
       # -------------------------------------------------
       #
       # Esta función usa una comprobación local sencilla:
-      # considera que el primer "}" cierra el mnemónico.
+      # considera que el primer "}" cierra la etiqueta.
       # Eso falla en casos documentados como:
       #
       #   {GL. [^{LAT. ...}]}
       #   {GL. [^Canonico. {RMK: marginal gloss in Latin.}]}
       #
-      # porque la primera "}" puede cerrar un mnemónico
+      # porque la primera "}" puede cerrar una etiqueta
       # interno, no GL.
       #
       # AD y GL tienen una excepción editorial específica:
-      # pueden contener inserciones escribales [^ ... ] con
-      # mnemónicos no estructurales internos.
+      # pueden contener inserciones del copista [^ ... ] con
+      # etiquetas no estructurales internos.
       #
       # Los errores reales en estos casos quedan cubiertos por:
       #
@@ -1900,7 +1900,7 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
           type = "insertion_crosses_mnemonic_container",
           text = line,
           explanation =
-            "Los corchetes abiertos dentro de un mnemónico deben cerrarse antes de la llave que cierra ese mnemónico."
+            "Los corchetes abiertos dentro de una etiqueta deben cerrarse antes de la llave que cierra esa etiqueta."
         )
       }
       
@@ -1933,7 +1933,7 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
           type = "deletion_crosses_mnemonic_container",
           text = line,
           explanation =
-            "Los paréntesis abiertos dentro de un mnemónico deben cerrarse antes de la llave que cierra ese mnemónico."
+            "Los paréntesis abiertos dentro de una etiqueta deben cerrarse antes de la llave que cierra esa etiqueta."
         )
       }
     }
@@ -1983,8 +1983,8 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
 # Nota sobre AD, GL y RMK:
 #
 #   AD y GL se excluyen de esta regla general porque
-#   pueden contener inserciones escribales [^ ... ] con
-#   mnemónicos no estructurales internos, por ejemplo:
+#   pueden contener inserciones del copista [^ ... ] con
+#   etiquetas no estructurales internas, por ejemplo:
 #
 #     {GL. [^Canonico. {RMK: marginal gloss in Latin.}]}
 #     {AD. [^{RUB. texto añadido}]}
@@ -1993,7 +1993,7 @@ check_insertions_deletions_do_not_cross_mnemonics <- function(filepath) {
 #   cierra un RMK interno como si cerrara el contenedor
 #   textual exterior.
 #
-#   Por eso, ciertos mnemónicos cerrados en la misma línea
+#   Por eso, ciertas etiquetas cerradas en la misma línea
 #   se saltan como bloque completo.
 #
 # ---------------------------------------------------------
@@ -2080,7 +2080,7 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
       rest <- substr(line, i, nchar(line))
       
       # ---------------------------------------------
-      # Apertura de mnemónico
+      # Apertura de etiqueta
       # ---------------------------------------------
       
       m <- regexec(
@@ -2410,7 +2410,7 @@ check_double_parenthesis_spacing <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   Los mnemónicos HSMS deben escribirse en mayúsculas.
+#   Las etiquetas HSMS deben escribirse en mayúsculas.
 #
 # ---------------------------------------------------------
 # Objetivo
@@ -2484,7 +2484,7 @@ check_mnemonic_uppercase <- function(filepath) {
         type = "mnemonic_not_uppercase",
         text = lines[[row$line[[1]]]],
         explanation = paste0(
-          "El mnemónico {",
+          "La etiqueta {",
           tag_raw,
           " debe escribirse en mayúsculas."
         )
@@ -2512,7 +2512,7 @@ check_mnemonic_uppercase <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   Detecta mnemónicos no definidos en el catálogo HSMS.
+#   Detecta etiquetas no definidos en el catálogo.
 #
 # ---------------------------------------------------------
 # Objetivo
@@ -2531,7 +2531,7 @@ check_mnemonic_uppercase <- function(filepath) {
 #
 #     extract_hsms_mnemonics()
 #
-# como parser central de mnemónicos.
+# como parser central de etiquetas.
 #
 # =========================================================
 
@@ -2601,7 +2601,7 @@ check_unknown_structural_tags <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   Detecta mnemónicos que llevan número aunque el catálogo
+#   Detecta etiquetas que llevan número aunque el catálogo
 #   indique que no deben llevarlo.
 #
 # ---------------------------------------------------------
@@ -2831,8 +2831,8 @@ check_missing_required_numbers <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   Cada mnemónico debe usar el delimitador definido
-#   en el catálogo HSMS.
+#   Cada etiqueta debe usar el delimitador definido
+#   en el catálogo.
 #
 # ---------------------------------------------------------
 # Ejemplos válidos:
@@ -2907,7 +2907,7 @@ check_tag_delimiters <- function(filepath) {
     # Excepciones de delimitador
     # ---------------------------------------------
     #
-    # Algunos mnemónicos admiten tanto "." como ":"
+    # Algunas etiquetas admiten tanto "." como ":"
     # según su uso concreto.
     #
     #   BLNK / SYMB:
@@ -3059,7 +3059,7 @@ get_folio_blocks <- function(lines) {
 # =========================================================
 # get_column_boundaries()
 # ---------------------------------------------------------
-# Localiza marcas de columna {CBn. dentro del fichero.
+# Localiza etiquetas de columna {CBn. dentro del fichero.
 #
 # ---------------------------------------------------------
 # Objetivo
@@ -3556,8 +3556,8 @@ check_rmk_standalone_context <- function(filepath) {
 #   RMK no es un contenedor textual y no puede ser
 #   multilínea.
 #
-#   Una RMK puede estar cerrada y seguida de otro
-#   mnemónico o de texto en la misma línea:
+#   Una RMK puede estar cerrada y seguida de otra
+#   etiqueta o de texto en la misma línea:
 #
 #     {RMK: HSMS-0555-0001: ... .} {IN2.} Aqui...
 #
@@ -4188,7 +4188,7 @@ check_backslash_only_inside_hd <- function(filepath) {
           type = "backslash_outside_hd",
           text = line,
           explanation =
-            "La barra inversa '\\' solo puede aparecer dentro del mnemónico {HD. ...}, {HD1. ...} o {HD2. ...} para indicar foliación antigua."
+            "La barra inversa '\\' solo puede aparecer dentro de la etiqueta {HD. ...}, {HD1. ...} o {HD2. ...} para indicar foliación antigua."
         )
       }
     }
@@ -4218,8 +4218,8 @@ check_backslash_only_inside_hd <- function(filepath) {
 #
 # Es decir:
 #
-#   - después de la marca [fol. n];
-#   - antes de la primera marca {CBn.;
+#   - después de la etiqueta [fol. n];
+#   - antes de la primera etiqueta {CBn.;
 #   - nunca después de haber comenzado una columna.
 #
 # ---------------------------------------------------------
@@ -4333,7 +4333,7 @@ check_hd_position_in_folio <- function(filepath) {
         type = "hd_after_column_start",
         text = lines[[abs_line]],
         explanation =
-          "La etiqueta {HD debe aparecer después del folio y antes de la primera marca {CBn."
+          "La etiqueta {HD debe aparecer después del folio y antes de la primera etiqueta {CBn."
       )
     }
   }
@@ -4357,7 +4357,7 @@ check_hd_position_in_folio <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   La marca de comienzo de columna {CBn. debe tener
+#   La etiqueta de comienzo de columna {CBn. debe tener
 #   uno de estos dos formatos:
 #
 #     {CBn.
@@ -4390,7 +4390,7 @@ check_hd_position_in_folio <- function(filepath) {
 # Notas:
 #
 #   Esta regla usa extract_hsms_mnemonics() como parser
-#   central y solo revisa mnemónicos CB reconocidos.
+#   central y solo revisa etiquetas CB reconocidas.
 #
 # =========================================================
 
@@ -4465,7 +4465,7 @@ check_cb_boundary_format <- function(filepath) {
         type = "invalid_cb_boundary_format",
         text = lines[[line_no]],
         explanation =
-          "La marca {CBn. debe aparecer como {CBn. o como {CBn.}."
+          "La etiqueta {CBn. debe aparecer como {CBn. o como {CBn.}."
       )
     }
   }
@@ -4510,7 +4510,7 @@ check_cb_boundary_format <- function(filepath) {
 #
 #   En esta regla, una etiqueta se considera vacía solo
 #   cuando no contiene ningún carácter entre la apertura
-#   del mnemónico y la llave de cierre.
+#   de la etiqueta y la llave de cierre.
 #
 # Es decir:
 #
@@ -4641,7 +4641,7 @@ check_empty_language_tag <- function(filepath) {
 #
 #   En esta regla, una etiqueta se considera vacía solo
 #   cuando no contiene ningún carácter entre la apertura
-#   del mnemónico y la llave de cierre.
+#   de la etiqueta y la llave de cierre.
 #
 # Es decir:
 #
@@ -4803,7 +4803,7 @@ check_empty_illumination_with_space <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   La marca de inicial {INn. debe:
+#   La etiqueta de inicial {INn. debe:
 #
 #     - llevar número
 #     - cerrarse correctamente
@@ -4822,8 +4822,8 @@ check_empty_illumination_with_space <- function(filepath) {
 #
 #   El manual indica que el número registra las líneas
 #   ocupadas por la caja de la inicial y que la letra que
-#   aparece como inicial en el manuscrito sigue al
-#   mnemónico completo tras un espacio en blanco.
+#   aparece como inicial en el manuscrito sigue a la
+#   etiqueta completo tras un espacio en blanco.
 #
 # ---------------------------------------------------------
 # Casos válidos:
@@ -4918,7 +4918,7 @@ check_initial_marker_format <- function(filepath) {
           type = "missing_initial_after_marker",
           text = line,
           explanation =
-            "La marca {INn.} debe ir seguida de un espacio y de la inicial transcrita."
+            "La etiqueta {INn.} debe ir seguida de un espacio y de la inicial transcrita."
         )
         
         next
@@ -4939,7 +4939,7 @@ check_initial_marker_format <- function(filepath) {
         type = "invalid_initial_marker_format",
         text = line,
         explanation =
-          "La marca {INn. debe cerrarse como {INn.} seguida de la inicial, o contener {ILL.}/{MIN.} y después la inicial."
+          "La etiqueta {INn. debe cerrarse como {INn.} seguida de la inicial, o contener {ILL.}/{MIN.} y después la inicial."
       )
     }
   }
@@ -4964,14 +4964,14 @@ check_initial_marker_format <- function(filepath) {
 # ---------------------------------------------------------
 # Regla estructural HSMS:
 #
-#   No debe haber más de un mnemónico {BLNK.} consecutivo.
+#   No debe haber más de una etiqueta {BLNK.} consecutivo.
 #
 # ---------------------------------------------------------
 # Fundamento
 # ---------------------------------------------------------
 #
 #   El manual indica que cuando un área en blanco ocupa
-#   más de una línea, debe usarse un único mnemónico
+#   más de una línea, debe usarse una única etiqueta
 #   {BLNK: ...} con campo de observación indicando el
 #   número de líneas en blanco.
 #
@@ -5193,7 +5193,7 @@ check_empty_symbol_tag <- function(filepath) {
 #     - entre segmentos;
 #     - después del segmento final;
 #     - la barra final debe aparecer inmediatamente antes
-#       de la llave de cierre del mnemónico.
+#       de la llave de cierre de la etiqueta.
 #
 # ---------------------------------------------------------
 # Alcance de esta regla
@@ -5595,7 +5595,7 @@ check_structure <- function(filepath) {
   }
   
   # -------------------------------------------------
-  # 0-pre-octies. [] y () no cruzan mnemónicos
+  # 0-pre-octies. [] y () no cruzan etiquetas
   # -------------------------------------------------
   
   crossing_insertions_issues <-
@@ -5750,7 +5750,7 @@ check_structure <- function(filepath) {
   }
   
   # -------------------------------------------------
-  # 0f. Formato de marcas {CBn.
+  # 0f. Formato de etiquetas {CBn.
   # -------------------------------------------------
   
   cb_format_issues <- check_cb_boundary_format(filepath)
@@ -6068,7 +6068,7 @@ check_structure <- function(filepath) {
       type = "no_folios",
       text = "",
       explanation =
-        "No se encontraron marcas de folio."
+        "No se encontraron etiquetas de folio."
     )
     
   } else {
@@ -6166,7 +6166,7 @@ check_structure <- function(filepath) {
         type = "cb_malformed",
         text = lines[[i]],
         explanation =
-          "{CBn. debe aparecer sola en una línea."
+          "La etiqueta {CBn. debe aparecer sola en una línea."
       )
     }
   }
