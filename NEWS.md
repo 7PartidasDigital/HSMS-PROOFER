@@ -10,12 +10,12 @@
 
 * Added bilingual validation messages (English/Spanish).
 * Added colour-coded status messages:
-
   * green when no issues are detected;
   * red when issues are present.
 * Hidden the issues table and diagnostic preview when validation succeeds.
 * Added an `About` tab with credits, acknowledgements, links and project philosophy.
 * Added a progress bar during validation to provide feedback when processing large files.
+* Added `bslib` to optime interface apperance.
 
 ### Technical checks
 
