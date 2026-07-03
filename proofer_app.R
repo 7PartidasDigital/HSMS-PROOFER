@@ -1,56 +1,9 @@
 # =========================================================
 # HSMS Proofer
-# ---------------------------------------------------------
-# Shiny application for the validation and proofing of
-# manuscript transcriptions prepared according to the
-# conventions of the Hispanic Seminary of Medieval Studies.
-#
-# The application performs structural, editorial and
-# technical checks and produces TSV and human-readable
-# diagnostic reports.
-#
-# Developed within the framework of the
-# Hispanic Seminary of Medieval Studies (HSMS).
-#
-# Authors:
-#
-# José Manuel Fradejas Rueda
-# Universidad de Valladolid
-#
-# Francisco Gago Jover
-# The College of the Holy Cross
-#
-# Historical background:
-#
-# The present application is the successor of the
-# original HSMS Proofer developed for the generation,
-# proofing and correction of machine-readable
-# transcriptions.
-#
-# References:
-#
-# Nitti, John J. (1978).
-# "The Computer Processing of Medieval Texts".
-# Computers and the Humanities, 12, 3-9.
-#
-# Repository:
-#
-# https://github.com/7PartidasDigital/HSMS-PROOFER
-#
-# License:
-#
-# MIT License
-#
-# Motto:
-#
-# Proofer points; the editor decides.
-# Proofer señala; el editor decide.
-#
 # =========================================================
-
-
 library(shiny)
 library(DT)
+library(bslib) # Añadido para un diseño más moderno
 
 source("technical_fixers.R", encoding = "UTF-8")
 source("validator_core.R", encoding = "UTF-8")
@@ -66,13 +19,10 @@ make_caret <- function(col) {
 }
 
 format_issue_text <- function(issue_row) {
-  
   line_info <- paste0("Line ", issue_row$line)
-  
   if (!is.na(issue_row$col)) {
     line_info <- paste0(line_info, ", col ", issue_row$col)
   }
-  
   line_info <- paste0(line_info, " [", issue_row$type, "]")
   
   paste(
@@ -86,73 +36,58 @@ format_issue_text <- function(issue_row) {
   )
 }
 
+# INTERFAZ DE USUARIO (UI)
 ui <- navbarPage(
   
-  title = "HSMS Proofer",
-  
+  # Aplicamos un tema moderno con bslib (ej. bootswatch "yeti" o "flatly")
+  theme = bs_theme(version = 5, bootswatch = "sandstone"),
+  title = tagList(
+    tags$img(
+      src = "https://oldspanishtextualarchive.org/css/hsms.png",
+      height = "80px", # Altura ajustada para que quepa bien en la barra superior
+      style = "margin-right: 15px; margin-top: -5px;" # Separación con el texto
+    ),
+    "HSMS Proofer"
+  ),
+
   tabPanel(
-    
     "Validación / Validation",
-    
     sidebarLayout(
-      
       sidebarPanel(
-        
         fileInput(
           inputId = "file",
-          label = "Seleccionar fichero transcripción / Select transcription file",
+          label = "Seleccionar fichero / Select file",
           accept = c(".txt", "text/plain")
         ),
         
-        br(),
+        hr(), # Línea divisoria
         
+        # Botones con iconos para hacerlos más intuitivos
         downloadButton(
           outputId = "download_tsv",
-          label = "Descargar informe / Download report (TSV)"
+          label = "Descargar informe (TSV)",
+          class = "btn-primary w-100 mb-2" # Estilo Bootstrap
         ),
-        
-        br(),
-        br(),
-        
         downloadButton(
           outputId = "download_txt",
-          label = "Descargar informe / Download report (TXT)"
+          label = "Descargar informe (TXT)",
+          class = "btn-info w-100 text-white" # Estilo Bootstrap
         )
       ),
       
       mainPanel(
-        
         h3("Resultados de la validación / Validation results"),
-        
         uiOutput("summary"),
-        
         br(),
-        
         uiOutput("issues_ui")
       )
     )
   ),
   
   tabPanel(
-    
     "Acerca de / About",
-    
     fluidPage(
-      
       br(),
-      
-      tags$a(
-        href = "https://www.hispanicseminary.org/",
-        target = "_blank",
-        tags$img(
-          src = "https://oldspanishtextualarchive.org/css/hsms.png",
-          height = "120px"
-        )
-      ),
-      
-      br(),
-      br(),
-      
       h2("HSMS Proofer"),
       
       p(paste("Version", APP_VERSION)),
@@ -234,98 +169,63 @@ ui <- navbarPage(
         "The program was developed within the framework of the Hispanic Seminary of Medieval Studies and continues nearly fifty years of computational work devoted to the generation, proofing, and analysis of machine-readable transcriptions."
       ),
       
-      br(),
-      
+      br(),      
       tags$hr(),
-      
       tags$blockquote(
-        
         style = "font-size: 1.1em;",
-        
-        tags$em(
-          "From machine-readable transcriptions to digital textual archives."
-        ),
-        
+        tags$em("From machine-readable transcriptions to digital textual archives."),
+        br(), br(),
+        tags$strong("Proofer points; the editor decides."),
         br(),
-        br(),
-        
-        tags$strong(
-          "Proofer points; the editor decides."
-        ),
-        
-        br(),
-        
-        tags$strong(
-          "Proofer señala; el editor decide."
-        )
-        
+        tags$strong("Proofer señala; el editor decide.")
       )
     )
   )
 )
 
+
+# LÓGICA DEL SERVIDOR (SERVER)
 server <- function(input, output, session) {
   
   validation_result <- reactive({
-    
     req(input$file)
-    
     withProgress(
-      
       message = "Validando transcripción / Validating transcription",
-      detail = "Espere, por favor. Los ficheros grandes pueden tardar varios minutos. / Please wait. Large files may take several minutes.",
+      detail = "Espere, por favor...",
       value = 0,
-      
       {
-        incProgress(
-          0.2,
-          detail = "Leyendo y comprobando el fichero / Reading and checking file."
-        )
+        incProgress(0.2, detail = "Leyendo y comprobando el fichero / Reading and checking file.")
         
         result <- validate_file(
           filepath = input$file$datapath,
           uploaded_name = input$file$name
         )
         
-        incProgress(
-          0.8,
-          detail = "Preparando el informe / Preparing report."
-        )
-        
+        incProgress(0.8, detail = "Preparando el informe / Preparing report.")
         result
       }
     )
   })
   
   issues_df <- reactive({
-    
     result <- validation_result()
-    
     df <- result$df
     
     if (is.null(df) || nrow(df) == 0) {
       return(data.frame(
-        line = integer(0),
-        col = integer(0),
-        type = character(0),
-        text = character(0),
-        explanation = character(0),
+        line = integer(0), col = integer(0), type = character(0),
+        text = character(0), explanation = character(0),
         stringsAsFactors = FALSE
       ))
     }
-    
     df
   })
   
   output$summary <- renderUI({
-    
     if (is.null(input$file)) {
       return(
-        tags$p(
-          HTML(
-            "Seleccione un fichero TXT para iniciar la validación.<br/>
-           Select a TXT file to start validation."
-          )
+        div(class = "alert alert-info", 
+            HTML("Seleccione un fichero TXT para iniciar la validación.<br/>Select a TXT file to start validation.")
         )
       )
     }
@@ -333,187 +233,76 @@ server <- function(input, output, session) {
     df <- issues_df()
     
     if (nrow(df) == 0) {
-      
       tags$div(
-        
-        h4(
-          style = "color: #228B22;",
-          HTML(
-            "&#10004; No se han detectado incidencias.<br/>&#10004; No issues detected."
-          )
-        ),
-        
-        p(
-          HTML(
-            paste0(
-              "<strong>",
-              input$file$name,
-              "</strong><br/>",
-              "Validación completada correctamente.<br/>",
-              "Successfully validated."
-            )
-          )
-        )
+        class = "alert alert-success", # Usamos clases de Bootstrap en lugar de inline styles
+        h4(HTML("&#10004; No se han detectado incidencias.<br/>&#10004; No issues detected.")),
+        p(HTML(paste0("<strong>", input$file$name, "</strong><br/>Validación completada correctamente.")))
       )
-      
     } else {
-      
       tags$div(
-        
-        h4(
-          style = "color: #B22222;",
-          HTML(
-            paste0(
-              "&#9888; ",
-              nrow(df),
-              " incidencia(s) detectada(s).<br/>",
-			  "&#9888; ",
-              nrow(df),
-              " issue(s) detected."
-            )
-          )
-        ),
-        
-        p(
-          HTML(
-            paste0(
-              "<strong>",
-              input$file$name,
-              "</strong><br/>",
-              "Validación completada con incidencias.<br/>",
-			  "Validation completed with issues."
-              
-            )
-          )
-        )
+        class = "alert alert-danger", # Usamos clases de Bootstrap
+        h4(HTML(paste0("&#9888; ", nrow(df), " incidencia(s) detectada(s). / issue(s) detected."))),
+        p(HTML(paste0("<strong>", input$file$name, "</strong><br/>Validación completada con incidencias.")))
       )
     }
   })
-
   
   output$issues_ui <- renderUI({
-    
     df <- issues_df()
-    
-    if (nrow(df) == 0) {
-      
-      return(NULL)
-      
-    }
+    if (nrow(df) == 0) return(NULL)
     
     tagList(
-      
       DTOutput("issues_table"),
-      
       br(),
-      
       h4("Diagnóstico / Diagnostic"),
-      
       verbatimTextOutput("diagnostic_preview")
-      
     )
-    
   })
   
-output$issues_table <- renderDT({
-    
+  output$issues_table <- renderDT({
     df <- issues_df()
     
     datatable(
       df,
       rownames = FALSE,
       selection = "single",
+      filter = "top", # <--- AÑADIDO: Permite buscar errores específicos por columna
       options = list(
         pageLength = 10,
         scrollX = TRUE,
-        searching = FALSE
+        searching = TRUE # <--- AÑADIDO: Habilita el buscador
       )
     )
   })
   
   output$diagnostic_preview <- renderText({
-    
     df <- issues_df()
-    
-    if (nrow(df) == 0) {
-      return("No diagnostic information to display.")
-    }
+    if (nrow(df) == 0) return("No diagnostic information to display.")
     
     selected <- input$issues_table_rows_selected
-    
-    if (length(selected) == 0) {
-      selected <- 1
-    }
+    if (length(selected) == 0) selected <- 1
     
     format_issue_text(df[selected, , drop = FALSE])
   })
   
   output$download_tsv <- downloadHandler(
-    
-    filename = function() {
-      paste0(
-        tools::file_path_sans_ext(input$file$name),
-        "_proofer_report.tsv"
-      )
-    },
-    
+    filename = function() { paste0(tools::file_path_sans_ext(input$file$name), "_proofer_report.tsv") },
     content = function(file) {
-      write.table(
-        issues_df(),
-        file = file,
-        sep = "\t",
-        quote = TRUE,
-        row.names = FALSE,
-        fileEncoding = "UTF-8"
-      )
+      write.table(issues_df(), file = file, sep = "\t", quote = TRUE, row.names = FALSE, fileEncoding = "UTF-8")
     }
   )
   
   output$download_txt <- downloadHandler(
-    
-    filename = function() {
-      paste0(
-        tools::file_path_sans_ext(input$file$name),
-        "_proofer_report.txt"
-      )
-    },
-    
+    filename = function() { paste0(tools::file_path_sans_ext(input$file$name), "_proofer_report.txt") },
     content = function(file) {
-      
       df <- issues_df()
-      
       if (nrow(df) == 0) {
-        report <- paste(
-          "HSMS Proofer informe / HSMS Proofer report",
-          "",
-          paste0("File: ", input$file$name),
-          "",
-          "No se detectaron incidencias / No issues detected.",
-          sep = "\n"
-        )
+        report <- paste("HSMS Proofer informe / HSMS Proofer report", "", paste0("File: ", input$file$name), "", "No se detectaron incidencias / No issues detected.", sep = "\n")
       } else {
-        diagnostics <- vapply(
-          seq_len(nrow(df)),
-          function(i) format_issue_text(df[i, , drop = FALSE]),
-          character(1)
-        )
-        
-        report <- paste(
-          "HSMS Proofer informe / HSMS Proofer report",
-          "",
-          paste0("Fichero / File: ", input$file$name),
-          paste0("Incidencias / Issues: ", nrow(df)),
-          "",
-          paste(diagnostics, collapse = "\n\n"),
-          sep = "\n"
-        )
+        diagnostics <- vapply(seq_len(nrow(df)), function(i) format_issue_text(df[i, , drop = FALSE]), character(1))
+        report <- paste("HSMS Proofer informe / HSMS Proofer report", "", paste0("Fichero / File: ", input$file$name), paste0("Incidencias / Issues: ", nrow(df)), "", paste(diagnostics, collapse = "\n\n"), sep = "\n")
       }
-      
-      writeLines(
-        report,
-        con = file,
-        useBytes = TRUE
-      )
+      writeLines(report, con = file, useBytes = TRUE)
     }
   )
 }
