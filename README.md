@@ -27,10 +27,14 @@ HSMS Proofer is a Shiny application for validating manuscript transcriptions pre
 Open RStudio and execute:
 
 ```r
-source("proofer.R")
+source("proofer_app.R")
 ```
 
+or just double click on `proofer_app.R` and it will open RStudio and load the code.
+
 Then launch the Shiny app.
+
+More details in the app [manual](https://hispanicseminary.org/manuales/proofer/index.html)
 
 ## Repository
 
