@@ -17,6 +17,10 @@
 * Added a progress bar during validation to provide feedback when processing large files.
 * Added `bslib` to optime interface apperance.
 
+### Editorial checks
+
+* Added a warning for grave accents (`) used as UVa-HSMS models HTR markers for superscript letters, reminding editors to replace them with the HSMS `<<...>>` notation.
+
 ### Technical checks
 
 * Added detection of Unicode combining diacritics to discourage manually composed characters and favour precomposed Unicode forms.

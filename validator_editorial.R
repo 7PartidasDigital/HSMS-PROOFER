@@ -639,7 +639,6 @@ check_edge_spaces <- function(filepath) {
 }
 
 
-
 # =========================================================
 # check_invisible_spaces()
 # ---------------------------------------------------------
@@ -737,6 +736,82 @@ check_invisible_spaces <- function(filepath) {
   do.call(rbind, lapply(issues, as.data.frame))
 }
 
+
+# =========================================================
+# check_grave_accent_superscript_marker()
+# ---------------------------------------------------------
+# Regla editorial/técnica HSMS:
+#
+#   En las trasncriopciones HTR, con los modelos UVa-HSMS
+#   el acento grave "`" se utiliza para marcar letras
+#   voladas o superescritas.
+#
+#   En la transcripción HSMS final, esas letras deben
+#   marcarse mediante:
+#
+#     <<...>>
+#
+# ---------------------------------------------------------
+# Objetivo:
+#
+#   Detectar restos del marcador provisional "`" para que
+#   el editor pueda sustituirlo por la codificación HSMS
+#   definitiva.
+#
+#   Proofer no corrige automáticamente el texto.
+#
+# =========================================================
+
+check_grave_accent_superscript_marker <- function(filepath) {
+  
+  lines <- readLines(
+    filepath,
+    encoding = "UTF-8",
+    warn = FALSE
+  )
+  
+  issues <- list()
+  
+  for (line_no in seq_along(lines)) {
+    
+    line <- lines[[line_no]]
+    
+    grave_positions <- gregexpr(
+      "`",
+      line,
+      fixed = TRUE
+    )[[1]]
+    
+    if (grave_positions[1] == -1) {
+      next
+    }
+    
+    for (pos in grave_positions) {
+      
+      issues[[length(issues) + 1]] <- list(
+        line = line_no,
+        col = pos,
+        type = "grave_accent_superscript_marker",
+        text = line,
+        explanation =
+          "Se ha detectado un acento grave (`). En el flujo HTR UVa-HSMS puede usarse provisionalmente para marcar letras voladas, pero en la transcripción HSMS final debe sustituirse por la forma <<...>>."
+      )
+    }
+  }
+  
+  if (length(issues) == 0) {
+    
+    return(data.frame(
+      line = integer(0),
+      col = integer(0),
+      type = character(0),
+      text = character(0),
+      explanation = character(0)
+    ))
+  }
+  
+  do.call(rbind, lapply(issues, as.data.frame))
+}
 
 
 # =========================================================
@@ -1902,6 +1977,7 @@ check_editorial <- function(filepath) {
   
   editorial_issues <- list(
     check_ellipsis(filepath),
+    check_grave_accent_superscript_marker(filepath),
     check_double_calderon_marker(filepath),
     check_percent_spacing(filepath),
     #check_para_spacing(filepath),
