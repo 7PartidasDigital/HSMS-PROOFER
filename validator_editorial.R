@@ -813,6 +813,96 @@ check_grave_accent_superscript_marker <- function(filepath) {
   do.call(rbind, lapply(issues, as.data.frame))
 }
 
+# =========================================================
+# check_htr_abbreviation_markers()
+# ---------------------------------------------------------
+# Regla editorial/técnica HSMS:
+#
+#   En algunos flujos HTR, las abreviaturas pueden marcarse
+#   provisionalmente con signos alternativos para evitar
+#   conflictos con los delimitadores angulares ordinarios:
+#
+#     ＜...＞
+#     ⊂...⊃
+#
+#   En la transcripción HSMS final, esas marcas deben
+#   convertirse a:
+#
+#     <...>
+#
+# ---------------------------------------------------------
+# Objetivo:
+#
+#   Detectar restos de marcas provisionales del flujo HTR
+#   para que el editor pueda sustituirlas por la codificación
+#   HSMS definitiva.
+#
+#   Proofer no corrige automáticamente el texto.
+#
+# =========================================================
+
+check_htr_abbreviation_markers <- function(filepath) {
+  
+  lines <- readLines(
+    filepath,
+    encoding = "UTF-8",
+    warn = FALSE
+  )
+  
+  issues <- list()
+  
+  marker_pattern <- "[＜＞⊂⊃]"
+  
+  for (line_no in seq_along(lines)) {
+    
+    line <- lines[[line_no]]
+    
+    marker_positions <- gregexpr(
+      marker_pattern,
+      line,
+      perl = TRUE
+    )[[1]]
+    
+    if (marker_positions[1] == -1) {
+      next
+    }
+    
+    for (pos in marker_positions) {
+      
+      marker <- substr(
+        line,
+        pos,
+        pos
+      )
+      
+      issues[[length(issues) + 1]] <- list(
+        line = line_no,
+        col = pos,
+        type = "htr_abbreviation_marker_not_converted",
+        text = line,
+        explanation =
+          paste0(
+            "Se ha detectado la marca provisional HTR '",
+            marker,
+            "'. Antes de pasar el texto por Proofer y por el analizador, las marcas ＜...＞ o ⊂...⊃ deben convertirse a la forma HSMS <...>."
+          )
+      )
+    }
+  }
+  
+  if (length(issues) == 0) {
+    
+    return(data.frame(
+      line = integer(0),
+      col = integer(0),
+      type = character(0),
+      text = character(0),
+      explanation = character(0)
+    ))
+  }
+  
+  do.call(rbind, lapply(issues, as.data.frame))
+}
 
 # =========================================================
 # check_close_open_spacing()
@@ -1978,6 +2068,7 @@ check_editorial <- function(filepath) {
   editorial_issues <- list(
     check_ellipsis(filepath),
     check_grave_accent_superscript_marker(filepath),
+    check_htr_abbreviation_markers(filepath),
     check_double_calderon_marker(filepath),
     check_percent_spacing(filepath),
     #check_para_spacing(filepath),

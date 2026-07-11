@@ -20,6 +20,7 @@
 ### Editorial checks
 
 * Added a warning for grave accents (`) used as UVa-HSMS models HTR markers for superscript letters, reminding editors to replace them with the HSMS `<<...>>` notation.
+* Added a warning for provisional HTR abbreviation markers (`＜...＞` and `⊂...⊃`), reminding editors to convert them to the HSMS `<...>` notation before final validation and analysis.
 
 ### Technical checks
 
