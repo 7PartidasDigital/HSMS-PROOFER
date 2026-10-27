@@ -77,7 +77,7 @@ hsms_structural_tag_catalog <- function() {
       "AD", "GL",
       "ARB", "ARG", "ARM", "BAS", "CAL", "CAT", "ENG",
       "FRN", "GAL", "GER", "GRK", "HEB", "ITL", "LAM",
-      "LAT", "PRT", "PRV",
+      "LAT", "PRT", "PRV", "CHN", "JPN",
       "RMK"
     ),
     position = c(
@@ -86,7 +86,7 @@ hsms_structural_tag_catalog <- function() {
       1, 1,
       1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1,
+      1, 1, 1, 1, 1,
       3
     ),
     contents = c(
@@ -95,7 +95,7 @@ hsms_structural_tag_catalog <- function() {
       3, 3,
       2, 2, 2, 2, 2, 2, 2,
       2, 2, 2, 2, 2, 2, 2,
-      2, 2, 2,
+      2, 2, 2, 2, 2,
       5
     ),
     delimiter = c(
@@ -104,7 +104,7 @@ hsms_structural_tag_catalog <- function() {
       ".", ".",
       ".", ".", ".", ".", ".", ".", ".",
       ".", ".", ".", ".", ".", ".", ".",
-      ".", ".", ".",
+      ".", ".", ".", ".", ".",
       ":"
     ),
     allows_vector_prefix = c(
@@ -113,7 +113,7 @@ hsms_structural_tag_catalog <- function() {
       FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE,
+      FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE
     ),
     allows_vector_suffix = c(
@@ -122,7 +122,7 @@ hsms_structural_tag_catalog <- function() {
       FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE,
+      FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE
     ),
     can_span_lines = c(
@@ -131,7 +131,7 @@ hsms_structural_tag_catalog <- function() {
       TRUE, TRUE,
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE,
+      TRUE, TRUE, TRUE, TRUE, TRUE,
       TRUE
     ),
     can_continue = c(
@@ -140,7 +140,7 @@ hsms_structural_tag_catalog <- function() {
       TRUE, TRUE,
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
       TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
-      TRUE, TRUE, TRUE,
+      TRUE, TRUE, TRUE, TRUE, TRUE,
       FALSE
     ),
     numbered = c(
@@ -149,7 +149,7 @@ hsms_structural_tag_catalog <- function() {
       FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-      FALSE, FALSE, FALSE,
+      FALSE, FALSE, FALSE, FALSE, FALSE,
       FALSE
     ),
     tag_group = c(
@@ -183,6 +183,8 @@ hsms_structural_tag_catalog <- function() {
       "language",     # LAT
       "language",     # PRT
       "language",     # PRV
+      "language",     # CHN
+      "language",     # JPN
       "remark"        # RMK
     ),
     # allows_empty:
@@ -221,6 +223,8 @@ hsms_structural_tag_catalog <- function() {
       FALSE,  # LAT
       FALSE,  # PRT
       FALSE,  # PRV
+      FALSE,  # CHN
+      FALSE,  # JPN
       FALSE   # RMK
     ),
     special_rule = c(
@@ -254,6 +258,8 @@ hsms_structural_tag_catalog <- function() {
       "none",              # LAT
       "none",              # PRT
       "none",              # PRV
+      "none",              # CHN
+      "none",              # JPN
       "remark"             # RMK
     ),
     special_processing = c(
@@ -262,7 +268,7 @@ hsms_structural_tag_catalog <- function() {
       1, 1,
       0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0,
+      0, 0, 0, 0, 0,
       9
     ),
     stringsAsFactors = FALSE
@@ -2015,7 +2021,7 @@ check_insertions_deletions_do_not_cross_textual_containers <- function(filepath)
     "CB", "CW", "DIAG", "HD", "MIN", "RUB", "SYMB", "SG",
     "ARB", "ARG", "ARM", "BAS", "CAL", "CAT", "ENG",
     "FRN", "GAL", "GER", "GRK", "HEB", "ITL", "LAM",
-    "LAT", "PRT", "PRV"
+    "LAT", "PRT", "PRV", "CHN", "JPN"
   )
   
   skip_as_block <- c(
@@ -4502,7 +4508,7 @@ check_cb_boundary_format <- function(filepath) {
 # Por ejemplo:
 #
 #   ARB ARG ARM BAS CAL CAT ENG FRN GAL GER
-#   GRK HEB ITL LAM LAT PRT PRV
+#   GRK HEB ITL LAM LAT PRT PRV CHN JPN
 #
 # ---------------------------------------------------------
 # Definición de “vacía”

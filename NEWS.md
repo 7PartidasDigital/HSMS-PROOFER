@@ -50,7 +50,7 @@
 * Marked legacy `((` and `))` as obsolete real-parenthesis markers.
 * Stopped validating spacing for legacy `((...))`, which is now kept only as a historical fossil.
 * Clarified the handling of `{GL.}` and `{AD.}` insertions in container-crossing checks, avoiding false reports when non-structural internal mnemonics such as `{RMK: ...}` occur inside scribal insertions.
-
+* Added support for the `CHN` (Chinese) and `JPN` (Japanese) language mnemonics, including validation of their structural properties and detection of empty tags.
 
 ### RMK
 
