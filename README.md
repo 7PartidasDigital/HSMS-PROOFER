@@ -36,6 +36,20 @@ Then launch the Shiny app.
 
 More details in the app [manual](https://hispanicseminary.org/manuales/proofer/index.html)
 
+## Desktop application
+### macOS desktop application
+
+HSMS Proofer can be packaged as a standalone macOS application using Electron and Shinylive. The resulting application runs independently of R and RStudio.
+
+The `build_hsms_proofer_macos.R` script automates the conversion, applies the necessary Electron download compatibility fix, and generates a distributable DMG installer.
+
+For requirements and detailed build instructions, see [BUILDING_MACOS.md](BUILDING_MACOS.md).
+
+### Windows
+
+Windows support is planned.
+
+
 ## Repository
 
 Developed within the framework of the Hispanic Seminary of Medieval Studies.
