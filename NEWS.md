@@ -17,6 +17,11 @@
 * Added a progress bar during validation to provide feedback when processing large files.
 * Added `bslib` to optime interface apperance.
 
+### Bug fixes
+
+- Fixed TSV and TXT report downloads when running HSMS Proofer through Shinylive/Electron.
+- Added automatic WebAssembly environment detection to apply a Chromium-specific download workaround while preserving standard download behavior in RStudio and conventional Shiny applications.
+
 ### Editorial checks
 
 * Added a warning for grave accents (`) used as UVa-HSMS models HTR markers for superscript letters, reminding editors to replace them with the HSMS `<<...>>` notation.

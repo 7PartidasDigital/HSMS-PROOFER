@@ -5,6 +5,41 @@ library(shiny)
 library(DT)
 library(bslib) # Añadido para un diseño más moderno
 
+# ============================================================
+# COMPATIBILIDAD DE DESCARGAS CON SHINYLIVE / ELECTRON
+# ============================================================
+#
+# En Shiny convencional, los botones de descarga mantienen
+# su comportamiento original.
+#
+# En Shinylive (WebAssembly), se elimina el atributo HTML
+# "download" para evitar un problema conocido de Chromium.
+#
+# La detección se realiza mediante la plataforma de R.
+#
+# Esta modificación no afecta a los informes TSV y TXT.
+# ============================================================
+
+downloadButton <- function(...) {
+  
+  # Crear el botón estándar de Shiny.
+  tag <- shiny::downloadButton(...)
+  
+  # Comprobar si R se ejecuta mediante WebAssembly.
+  is_shinylive <- grepl(
+    "emscripten",
+    R.version$platform,
+    ignore.case = TRUE
+  )
+  
+  # Aplicar la corrección solamente en Shinylive.
+  if (is_shinylive) {
+    tag$attribs$download <- NULL
+  }
+  
+  return(tag)
+}
+
 source("technical_fixers.R", encoding = "UTF-8")
 source("validator_core.R", encoding = "UTF-8")
 source("validator_structure.R", encoding = "UTF-8")
