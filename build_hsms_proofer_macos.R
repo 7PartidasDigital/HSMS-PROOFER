@@ -1,95 +1,114 @@
 # ============================================================
-# HSMS PROOFER — CONSTRUCCIÓN DEL INSTALADOR PARA macOS ARM64
+# HSMS PROOFER — BUILD macOS ARM64 INSTALLER
 # ============================================================
+# Usage:
+#   1. Put this file in ~/Desktop/HSMS-PROOFER/.
+#   2. Ensure proofer_app.R and www/hsms.png are present.
+#   3. Open this file in RStudio and click Source.
+#   4. Install and test the resulting DMG before distribution.
 #
-# ¿Cuándo se usa?
-#   Después de modificar una regla de validación, la interfaz o cualquier
-#   archivo fuente de HSMS-PROOFER y comprobar que funciona en RStudio.
+# The script NEVER modifies the source R files. It creates a
+# separate, timestamped build folder, copies the required files,
+# renames proofer_app.R to app.R in that copy only, exports the
+# Shiny application, patches Electron's download window handling,
+# checks main.js syntax and rebuilds the macOS ARM64 installer.
 #
-# ¿Qué hace?
-#   1. Convierte la aplicación Shiny a Shinylive y crea Electron.
-#   2. Introduce en main.js la corrección de las ventanas auxiliares
-#      que quedan abiertas después de descargar informes TSV/TXT.
-#   3. Reconstruye SOLAMENTE Electron para incluir ese cambio en el .dmg.
-#
-# ¿Qué NO hace?
-#   - No modifica los .R originales ni las reglas de validación.
-#   - No requiere ejecutar npm audit fix --force.
-#   - No borra versiones anteriores ni instala el .dmg en Aplicaciones.
-#
-# USO
-#   1. Guardar ESTE archivo en ~/Desktop/HSMS-PROOFER/.
-#   2. Abrirlo en RStudio y pulsar «Source» (o ejecutar todo el archivo).
-#   3. Esperar a que finalice la segunda compilación.
-#   4. Abrir el .dmg indicado al final y probar TSV y TXT.
-#
-# REQUISITOS
-#   - macOS con Apple Silicon (ARM64).
-#   - Paquete R shinyelectron instalado y Node.js local de shinyelectron.
-#   - La carpeta de la aplicación contiene app.R y los validator_*.R.
-#   - app.R conserva la corrección downloadButton() para Shinylive.
-#
-# IMPORTANTE
-#   shinyelectron genera main.js en cada exportación: NO editarlo a mano.
-#   Este script aplica la corrección automáticamente en cada compilación.
-#   Si cambia el formato interno de main.js, DETENDRÁ el proceso para
-#   evitar generar silenciosamente un instalador sin la corrección.
+# IMPORTANT: This build procedure has not yet been end-to-end
+# tested with this revised script. Test the resulting installer.
 # ============================================================
 
-# ---- CONFIGURACIÓN: modificar solo si se mueven las carpetas ----
-app_dir <- path.expand("~/Desktop/HSMS-PROOFER")
+# ---- 1. PATHS -------------------------------------------------
+source_dir <- path.expand("~/Desktop/HSMS-PROOFER")
 builds_dir <- path.expand("~/Desktop/HSMS-PROOFER-Builds")
-
-# Cada ejecución crea una carpeta nueva. Así se conservan los .dmg anteriores.
 build_id <- format(Sys.time(), "%Y%m%d-%H%M%S")
-dest_dir <- file.path(builds_dir, paste0("HSMS-PROOFER-", build_id))
+build_dir <- file.path(builds_dir, paste0("HSMS-PROOFER-", build_id))
+work_dir <- file.path(build_dir, "work")
+export_dir <- file.path(build_dir, "export")
 
-# ---- COMPROBACIONES INICIALES ----
+# ---- 2. INPUT VALIDATION --------------------------------------
+if (.Platform$OS.type != "unix" || Sys.info()[["sysname"]] != "Darwin") {
+  stop("This script must be run on macOS.")
+}
+if (Sys.info()[["machine"]] != "arm64") {
+  stop("This script targets Apple Silicon (arm64).")
+}
 if (!requireNamespace("shinyelectron", quietly = TRUE)) {
-  stop("Falta shinyelectron. Instálalo en R antes de compilar.")
+  stop("R package 'shinyelectron' is not installed.")
 }
-if (!dir.exists(app_dir) || !file.exists(file.path(app_dir, "app.R"))) {
-  stop("No encuentro app.R en: ", app_dir)
-}
-if (file.exists(dest_dir)) {
-  stop("La carpeta de salida ya existe; no la sobrescribiré: ", dest_dir)
-}
-dir.create(builds_dir, recursive = TRUE, showWarnings = FALSE)
 
-# ---- 1. EXPORTACIÓN NORMAL DE SHINYLIVE Y ELECTRON ----
-# run_after = FALSE evita abrir una aplicación de desarrollo al terminar.
-# Nota: export() ya genera un primer .dmg, que reconstruiremos tras el parche.
-message("[1/4] Exportando la aplicación a Electron...")
+required_r <- c(
+  "proofer_app.R", "technical_fixers.R", "validator_core.R",
+  "validator_structure.R", "validator_editorial.R", "validator_main.R"
+)
+required_files <- c(file.path(source_dir, required_r),
+                    file.path(source_dir, "www", "hsms.png"))
+missing <- required_files[!file.exists(required_files)]
+if (length(missing)) {
+  stop("Missing source file(s):\n", paste(missing, collapse = "\n"))
+}
+if (dir.exists(build_dir)) {
+  stop("Build directory already exists: ", build_dir)
+}
+
+# ---- 3. CREATE AN ISOLATED SHINY APP COPY ---------------------
+dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot(dir.exists(work_dir))
+
+# Copy only runtime files, not old builds, documentation, or installers.
+for (name in required_r) {
+  if (!file.copy(file.path(source_dir, name), file.path(work_dir, name))) {
+    stop("Failed to copy source file: ", name)
+  }
+}
+dir.create(file.path(work_dir, "www"))
+if (!file.copy(file.path(source_dir, "www", "hsms.png"),
+               file.path(work_dir, "www", "hsms.png"))) {
+  stop("Failed to copy www/hsms.png")
+}
+
+# Shiny's standard entry point; the original remains untouched.
+if (!file.copy(file.path(work_dir, "proofer_app.R"),
+               file.path(work_dir, "app.R"), overwrite = FALSE)) {
+  stop("Failed to create work/app.R")
+}
+message("[1/5] Isolated application copy created: ", work_dir)
+
+# ---- 4. EXPORT SHINYLIVE + INITIAL ELECTRON BUILD ------------
+# Shinylive export can require internet access for WebAssembly
+# packages. Do not disable package bundling here by default.
+# run_after = FALSE prevents starting a development-mode instance.
+message("[2/5] Exporting app to Shinylive and Electron...")
 shinyelectron::export(
-  appdir = app_dir,
-  destdir = dest_dir,
+  appdir = work_dir,
+  destdir = export_dir,
   app_name = "HSMS Proofer",
+  platform = "mac",
+  arch = "arm64",
   run_after = FALSE
 )
 
-# ---- 2. INCORPORAR LA CORRECCIÓN AL main.js GENERADO ----
-main_path <- file.path(dest_dir, "electron-app", "main.js")
-if (!file.exists(main_path)) {
-  stop("La exportación no ha generado el archivo esperado: ", main_path)
-}
-
+# ---- 5. PATCH THE GENERATED ELECTRON MAIN.JS -----------------
+main_path <- file.path(export_dir, "electron-app", "main.js")
+if (!file.exists(main_path)) stop("main.js was not generated: ", main_path)
 main_lines <- readLines(main_path, warn = FALSE, encoding = "UTF-8")
+
+# Exact anchor from the shinyelectron version used in our tested
+# manual build. Stop safely if a future template changes.
 anchor <- "  // Save window state on resize/move (debounced; these events fire rapidly)"
 anchor_pos <- which(main_lines == anchor)
-
 if (length(anchor_pos) != 1L) {
-  stop(
-    "No encuentro el punto exacto para insertar el control de descargas. ",
-    "Es posible que shinyelectron haya cambiado su plantilla main.js. ",
-    "No se reconstruirá el DMG: revisa el nuevo main.js."
-  )
+  stop("main.js template has changed; download patch was NOT applied. ",
+       "Please inspect the generated Electron project before rebuilding.")
+}
+if (any(grepl("HSMS PROOFER: DOWNLOAD WINDOW FIX", main_lines, fixed = TRUE))) {
+  stop("main.js already contains the download patch. Aborting to avoid duplicates.")
 }
 
-# Este bloque reproduce el comportamiento que se probó con éxito:
-# registrar las ventanas auxiliares y cerrarlas al completar una descarga.
-# No se bloquean las ventanas nuevas, porque ello podría impedir la descarga.
-download_patch <- c(
-  "  // HSMS PROOFER: cerrar ventanas auxiliares al finalizar una descarga.",
+# This is the same auxiliary-window workaround tested on macOS
+# and Windows: track child windows and close them after a
+# successful file download, leaving the main window untouched.
+patch <- c(
+  "  // HSMS PROOFER: DOWNLOAD WINDOW FIX",
   "  const downloadWindows = new Set();",
   "",
   "  mainWindow.webContents.on('did-create-window', (childWindow) => {",
@@ -112,64 +131,61 @@ download_patch <- c(
   "  });",
   ""
 )
-
-main_lines <- append(main_lines, download_patch, after = anchor_pos - 1L)
+main_lines <- append(main_lines, patch, after = anchor_pos - 1L)
 writeLines(main_lines, main_path, useBytes = TRUE)
-message("[2/4] Corrección de descargas incorporada en main.js.")
+message("[3/5] Download-window patch added to main.js")
 
-# ---- 3. LOCALIZAR NODE Y NPM DE SHINYELECTRON ----
-# shinyelectron instala Node.js en una carpeta privada; por eso macOS puede
-# indicar «npm: command not found» al escribir npm en una Terminal normal.
+# ---- 6. FIND SHINYELECTRON'S LOCAL NODE.JS / NPM -------------
 node_cache <- path.expand("~/Library/Caches/shinyelectron/assets/nodejs")
+if (!dir.exists(node_cache)) stop("Node.js cache directory is missing: ", node_cache)
 node_versions <- list.dirs(node_cache, full.names = TRUE, recursive = FALSE)
 node_versions <- node_versions[grepl("^v[0-9]", basename(node_versions))]
-
-if (length(node_versions) == 0L) {
-  stop("No encuentro Node.js local de shinyelectron en: ", node_cache)
-}
-
-# Escoger la versión instalada más reciente, no depender de v26.13.1.
+if (!length(node_versions)) stop("No local Node.js versions found")
 version_values <- package_version(sub("^v", "", basename(node_versions)))
 node_root <- node_versions[order(version_values, decreasing = TRUE)[1L]]
 node_bin <- file.path(node_root, "darwin-arm64", "bin")
 node_path <- file.path(node_bin, "node")
 npm_path <- file.path(node_bin, "npm")
-
 if (!file.exists(node_path) || !file.exists(npm_path)) {
-  stop("No encuentro los ejecutables node y npm en: ", node_bin)
+  stop("node/npm not found in: ", node_bin)
 }
-
-# Facilitar a npm el acceso a node durante esta sesión de R.
 Sys.setenv(PATH = paste(node_bin, Sys.getenv("PATH"), sep = .Platform$path.sep))
 
-# Comprobar que el main.js editado tiene sintaxis JavaScript válida.
-message("[3/4] Comprobando la sintaxis de main.js...")
+# Check JavaScript syntax before spending time building again.
+message("[4/5] Checking JavaScript syntax...")
 syntax_status <- system2(node_path, c("--check", shQuote(main_path)))
 if (!identical(as.integer(syntax_status), 0L)) {
-  stop("main.js contiene un error de sintaxis. No se reconstruirá el DMG.")
+  stop("main.js has a syntax error; installer will not be rebuilt")
 }
 
-# ---- 4. RECONSTRUIR ELECTRON Y EL INSTALADOR DMG ----
-# NO volver a llamar a export(): eso regeneraría main.js y perdería el parche.
-electron_dir <- file.path(dest_dir, "electron-app")
+# ---- 7. REBUILD ONLY ELECTRON / DMG ---------------------------
+electron_dir <- file.path(export_dir, "electron-app")
+if (!file.exists(file.path(electron_dir, "package.json"))) {
+  stop("Electron package.json was not generated")
+}
 old_wd <- getwd()
-tryCatch({
+build_status <- tryCatch({
   setwd(electron_dir)
-  message("[4/4] Generando el DMG de macOS ARM64...")
-  build_status <- system2(npm_path, c("run", "build-mac-arm64"))
-  if (!identical(as.integer(build_status), 0L)) {
-    stop("Falló npm run build-mac-arm64. Revisa los mensajes anteriores.")
-  }
+  message("[5/5] Rebuilding macOS ARM64 DMG...")
+  system2(npm_path, c("run", "build-mac-arm64"))
 }, finally = {
   setwd(old_wd)
 })
-
-dist_dir <- file.path(electron_dir, "dist")
-dmg_files <- list.files(dist_dir, pattern = "\\.dmg$", full.names = TRUE)
-if (length(dmg_files) == 0L) {
-  stop("La compilación terminó, pero no encuentro ningún .dmg en: ", dist_dir)
+if (!identical(as.integer(build_status), 0L)) {
+  stop("npm run build-mac-arm64 failed; check preceding output")
 }
 
-message("\n¡CONSTRUCCIÓN COMPLETADA!")
-message("Instalador(es):\n", paste(dmg_files, collapse = "\n"))
-message("Prueba de aceptación: instalar y comprobar validación, TSV y TXT.")
+dist_dir <- file.path(electron_dir, "dist")
+dmg_files <- list.files(dist_dir, pattern = "\\.dmg$", full.names = TRUE,
+                        ignore.case = TRUE)
+if (!length(dmg_files)) stop("Build finished but no DMG was found: ", dist_dir)
+
+cat("\n============================================================\n")
+cat("MACOS BUILD FINISHED SUCCESSFULLY\n")
+cat("============================================================\n")
+cat("Build folder: ", build_dir, "\n", sep = "")
+cat("Installer(s):\n", paste0("  ", dmg_files, collapse = "\n"), "\n", sep = "")
+cat("Next: install and test TEXT.REM.txt, TEXT.FALSA.txt, TSV/TXT downloads,\n")
+cat("auxiliary-window closure and the local logo while offline.\n")
+cat("Keep the last known-good DMG until these tests pass.\n")
+cat("Review security advisories and signing before public distribution.\n")
