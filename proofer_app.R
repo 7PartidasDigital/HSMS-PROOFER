@@ -78,7 +78,7 @@ ui <- navbarPage(
   theme = bs_theme(version = 5, bootswatch = "sandstone"),
   title = tagList(
     tags$img(
-      src = "https://oldspanishtextualarchive.org/css/hsms.png",
+      src = "hsms.png",
       height = "80px", # Altura ajustada para que quepa bien en la barra superior
       style = "margin-right: 15px; margin-top: -5px;" # Separación con el texto
     ),
