@@ -9,12 +9,14 @@
 #
 # The script NEVER modifies the source R files. It creates a
 # separate, timestamped build folder, copies the required files,
-# renames proofer_app.R to app.R in that copy only, exports the
+# creates app.R from proofer_app.R in that copy only, sets up
+# shinyelectron's local Node.js before export(), exports the
 # Shiny application, patches Electron's download window handling,
 # checks main.js syntax and rebuilds the macOS ARM64 installer.
 #
-# IMPORTANT: This build procedure has not yet been end-to-end
-# tested with this revised script. Test the resulting installer.
+# The build sequence was successfully tested on macOS ARM64 on
+# 2026-11-24 after setting Node.js on PATH before export().
+# Always test the resulting installer before distribution.
 # ============================================================
 
 # ---- 1. PATHS -------------------------------------------------
@@ -50,7 +52,25 @@ if (dir.exists(build_dir)) {
   stop("Build directory already exists: ", build_dir)
 }
 
-# ---- 3. CREATE AN ISOLATED SHINY APP COPY ---------------------
+# ---- 3. CONFIGURE NODE.JS / NPM BEFORE EXPORT -----------------
+node_cache <- path.expand("~/Library/Caches/shinyelectron/assets/nodejs")
+if (!dir.exists(node_cache)) stop("Node.js cache directory is missing: ", node_cache)
+node_versions <- list.dirs(node_cache, full.names = TRUE, recursive = FALSE)
+node_versions <- node_versions[grepl("^v[0-9]", basename(node_versions))]
+if (!length(node_versions)) stop("No local Node.js versions found")
+version_values <- package_version(sub("^v", "", basename(node_versions)))
+node_root <- node_versions[order(version_values, decreasing = TRUE)[1L]]
+node_bin <- file.path(node_root, "darwin-arm64", "bin")
+node_path <- file.path(node_bin, "node")
+npm_path <- file.path(node_bin, "npm")
+if (!file.exists(node_path) || !file.exists(npm_path)) {
+  stop("node/npm not found in: ", node_bin)
+}
+Sys.setenv(PATH = paste(node_bin, Sys.getenv("PATH"), sep = .Platform$path.sep))
+
+message("Node.js ready before export: ", node_path)
+
+# ---- 4. CREATE AN ISOLATED SHINY APP COPY ---------------------
 dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
 stopifnot(dir.exists(work_dir))
 
@@ -73,7 +93,7 @@ if (!file.copy(file.path(work_dir, "proofer_app.R"),
 }
 message("[1/5] Isolated application copy created: ", work_dir)
 
-# ---- 4. EXPORT SHINYLIVE + INITIAL ELECTRON BUILD ------------
+# ---- 5. EXPORT SHINYLIVE + INITIAL ELECTRON BUILD ------------
 # Shinylive export can require internet access for WebAssembly
 # packages. Do not disable package bundling here by default.
 # run_after = FALSE prevents starting a development-mode instance.
@@ -87,7 +107,7 @@ shinyelectron::export(
   run_after = FALSE
 )
 
-# ---- 5. PATCH THE GENERATED ELECTRON MAIN.JS -----------------
+# ---- 6. PATCH THE GENERATED ELECTRON MAIN.JS -----------------
 main_path <- file.path(export_dir, "electron-app", "main.js")
 if (!file.exists(main_path)) stop("main.js was not generated: ", main_path)
 main_lines <- readLines(main_path, warn = FALSE, encoding = "UTF-8")
@@ -135,22 +155,6 @@ main_lines <- append(main_lines, patch, after = anchor_pos - 1L)
 writeLines(main_lines, main_path, useBytes = TRUE)
 message("[3/5] Download-window patch added to main.js")
 
-# ---- 6. FIND SHINYELECTRON'S LOCAL NODE.JS / NPM -------------
-node_cache <- path.expand("~/Library/Caches/shinyelectron/assets/nodejs")
-if (!dir.exists(node_cache)) stop("Node.js cache directory is missing: ", node_cache)
-node_versions <- list.dirs(node_cache, full.names = TRUE, recursive = FALSE)
-node_versions <- node_versions[grepl("^v[0-9]", basename(node_versions))]
-if (!length(node_versions)) stop("No local Node.js versions found")
-version_values <- package_version(sub("^v", "", basename(node_versions)))
-node_root <- node_versions[order(version_values, decreasing = TRUE)[1L]]
-node_bin <- file.path(node_root, "darwin-arm64", "bin")
-node_path <- file.path(node_bin, "node")
-npm_path <- file.path(node_bin, "npm")
-if (!file.exists(node_path) || !file.exists(npm_path)) {
-  stop("node/npm not found in: ", node_bin)
-}
-Sys.setenv(PATH = paste(node_bin, Sys.getenv("PATH"), sep = .Platform$path.sep))
-
 # Check JavaScript syntax before spending time building again.
 message("[4/5] Checking JavaScript syntax...")
 syntax_status <- system2(node_path, c("--check", shQuote(main_path)))
@@ -158,7 +162,7 @@ if (!identical(as.integer(syntax_status), 0L)) {
   stop("main.js has a syntax error; installer will not be rebuilt")
 }
 
-# ---- 7. REBUILD ONLY ELECTRON / DMG ---------------------------
+# ---- 8. REBUILD ONLY ELECTRON / DMG ---------------------------
 electron_dir <- file.path(export_dir, "electron-app")
 if (!file.exists(file.path(electron_dir, "package.json"))) {
   stop("Electron package.json was not generated")
